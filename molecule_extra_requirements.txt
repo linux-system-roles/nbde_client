@@ -1,3 +1,4 @@
 # SPDX-License-Identifier: MIT
 
 # Write extra requirements for running molecule here:
+wcwidth==0.1.9; python_version == "3.6"
