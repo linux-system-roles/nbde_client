@@ -1,0 +1,16 @@
+---
+- hosts: all
+  become: true
+
+  vars:
+    nbde_client_bindings:
+      - devices:
+          - path: /dev/sda1
+            pass: password
+        pin:
+          servers:
+            - http://tang.server01
+            - http://tang.server02
+  roles:
+    - linux-system-roles.nbde_client
+# vim:set ts=2 sw=2 et:
