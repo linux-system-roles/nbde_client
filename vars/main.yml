@@ -1,0 +1,4 @@
+# SPDX-License-Identifier: MIT
+---
+# Put the role's internal variables here that are not distribution specific.
+# vim:set ts=2 sw=2 et:
