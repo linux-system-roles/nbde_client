@@ -1,0 +1,13 @@
+---
+- name: Clean up dummy testing device
+  file:
+    path: "{{ test_device }}"
+    state: absent
+
+- name: Clean up dummy keyfile
+  when: test_keyfile is defined
+  file:
+    path: "{{ test_keyfile }}"
+    state: absent
+
+# vim:set ts=2 sw=2 et:

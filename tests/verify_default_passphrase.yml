@@ -1,0 +1,9 @@
+---
+- name: Verify the default passphrase works
+  shell: >
+    echo -n "{{ test_pass }}" |
+    cryptsetup open --test-passphrase "{{ test_device }}"
+  ignore_errors: yes
+  register: nbde_passphrase
+
+# vim:set ts=2 sw=2 et:

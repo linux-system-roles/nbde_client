@@ -1,0 +1,16 @@
+---
+- name: Create device for testing
+  shell: "fallocate -l64m {{ test_device }}"
+
+- name: Format test device as LUKS
+  shell: >
+    echo -n "{{ test_pass }}" |
+    cryptsetup luksFormat --pbkdf pbkdf2 --pbkdf-force-iterations 1000
+    --batch-mode --force-password "{{ test_device }}"
+
+- name: Create keyfile for test device
+  when: test_keyfile is defined
+  shell: >
+    echo -n "{{ test_pass }}" > "{{ test_keyfile }}"
+
+# vim:set ts=2 sw=2 et:

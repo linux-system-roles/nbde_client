@@ -1,0 +1,17 @@
+---
+- name: Ensure that the role declares all parameters in defaults
+  hosts: all
+
+  tasks:
+    - block:
+        - import_role:
+            name: linux-system-roles.nbde_client
+        - assert:
+            that: "{{ item }} is defined"
+          loop:
+            - nbde_client_provider
+            - nbde_client_bindings
+            - nbde_client_remote_dir
+            - nbde_client_update_initramfs
+          when: "ansible_version.full is version_compare('2.7', '>=')"
+# vim:set ts=2 sw=2 et:

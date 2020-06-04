@@ -1,0 +1,12 @@
+---
+- name: Verify we can unlock the device
+  command: clevis luks unlock -d "{{ test_device }}" -n nbde_client_unlocked
+  ignore_errors: yes
+  register: nbde_unlock
+
+- name: Close unlocked device
+  command: cryptsetup close nbde_client_unlocked
+  ignore_errors: yes
+  register: nbde_close
+
+# vim:set ts=2 sw=2 et:
