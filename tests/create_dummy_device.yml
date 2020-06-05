@@ -1,16 +1,16 @@
 ---
 - name: Create device for testing
-  shell: "fallocate -l64m {{ test_device }}"
+  shell: "fallocate -l64m {{ nbde_client_test_device }}"
 
 - name: Format test device as LUKS
   shell: >
-    echo -n "{{ test_pass }}" |
+    echo -n "{{ nbde_client_test_pass }}" |
     cryptsetup luksFormat --pbkdf pbkdf2 --pbkdf-force-iterations 1000
-    --batch-mode --force-password "{{ test_device }}"
+    --batch-mode --force-password "{{ nbde_client_test_device }}"
 
 - name: Create keyfile for test device
-  when: test_keyfile is defined
+  when: nbde_client_test_keyfile is defined
   shell: >
-    echo -n "{{ test_pass }}" > "{{ test_keyfile }}"
+    echo -n "{{ nbde_client_test_pass }}" > "{{ nbde_client_test_keyfile }}"
 
 # vim:set ts=2 sw=2 et:

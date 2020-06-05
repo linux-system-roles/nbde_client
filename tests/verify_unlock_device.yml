@@ -1,6 +1,8 @@
 ---
 - name: Verify we can unlock the device
-  command: clevis luks unlock -d "{{ test_device }}" -n nbde_client_unlocked
+  command: >
+    clevis luks unlock -d "{{ nbde_client_test_device }}"
+    -n nbde_client_unlocked
   ignore_errors: yes
   register: nbde_unlock
 

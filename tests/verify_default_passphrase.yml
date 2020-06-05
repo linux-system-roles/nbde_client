@@ -1,8 +1,8 @@
 ---
 - name: Verify the default passphrase works
   shell: >
-    echo -n "{{ test_pass }}" |
-    cryptsetup open --test-passphrase "{{ test_device }}"
+    echo -n "{{ nbde_client_test_pass }}" |
+    cryptsetup open --test-passphrase "{{ nbde_client_test_device }}"
   ignore_errors: yes
   register: nbde_passphrase
 
