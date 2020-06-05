@@ -57,8 +57,8 @@ nbde_client_provider: clevis
 # auth:
 #  slot: 3
 #  servers:
-#    - http://tang.server01
-#    - http://tang.server02
+#    - http://server1.example.com
+#    - http://server2.example.com
 #  overwrite: yes
 #
 #
@@ -70,8 +70,8 @@ nbde_client_provider: clevis
 #        pass: password
 #     auth:
 #       servers:
-#         - http://tang.server01
-#         - http://tang.server02
+#         - http://server1.example.com
+#         - http://server2.example.com
 #    state: present
 nbde_client_bindings: []
 

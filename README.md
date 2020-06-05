@@ -74,8 +74,8 @@ Example:
 auth:
   slot: 3
   servers:
-    - http://tang.server01
-    - http://tang.server02
+    - http://server1.example.com
+    - http://server2.example.com
   overwrite: yes
 ```
 
@@ -96,8 +96,8 @@ Example Playbooks
             pass: passphrase
         auth:
           servers:
-            - http://tang.server01
-            - http://tang.server02
+            - http://server1.example.com
+            - http://server2.example.com
   roles:
     - linux-system-roles.nbde_client
 ```

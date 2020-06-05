@@ -9,8 +9,8 @@
             pass: password
         auth:
           servers:
-            - http://tang.server01
-            - http://tang.server02
+            - http://server1.example.com
+            - http://server2.example.com
   roles:
     - linux-system-roles.nbde_client
 # vim:set ts=2 sw=2 et:
