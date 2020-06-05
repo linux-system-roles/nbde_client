@@ -33,8 +33,8 @@
         - name: Make sure the attempt to unlock succeeded
           assert:
             that:
-              - not nbde_unlock.failed
-              - not nbde_close.failed
+              - not nbde_client_unlock.failed
+              - not nbde_client_close.failed
 
         - name: Attempt to check whether default passphrase works
           include: tasks/verify_default_passphrase.yml
@@ -42,7 +42,7 @@
         - name: Make sure the default passphrase did not work
           assert:
             that:
-              - nbde_passphrase.rc != 0
+              - nbde_client_passphrase.rc != 0
 
       always:
         - name: Clean up test environment

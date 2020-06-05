@@ -26,8 +26,8 @@
         - name: Make sure the attempt to unlock succeeded
           assert:
             that:
-              - not nbde_unlock.failed
-              - not nbde_close.failed
+              - not nbde_client_unlock.failed
+              - not nbde_client_close.failed
 
       always:
         - name: Clean up test environment

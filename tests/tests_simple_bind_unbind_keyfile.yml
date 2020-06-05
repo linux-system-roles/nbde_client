@@ -30,8 +30,8 @@
         - name: Make sure the attempt to unlock failed
           assert:
             that:
-              - nbde_unlock.failed
-              - nbde_close.failed
+              - nbde_client_unlock.failed
+              - nbde_client_close.failed
 
       always:
         - name: Clean up test environment
