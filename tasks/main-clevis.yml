@@ -4,30 +4,30 @@
     name: "{{ __nbde_client_package_list }}"
     state: present
 
+- name: Prepare keyfiles, perform clevis operations and dispose of keyfiles
+  block:
+    - name: Ensure we transfer keyfiles
+      copy:
+        src: "{{ item.1.keyfile | default('/dev/null') }}"
+        dest: "{{ nbde_client_remote_dir }}/"
+        mode: '0400'
+      with_subelements:
+        - "{{ nbde_client_bindings }}"
+        - devices
 
-- name: Ensure we transfer keyfiles
-  copy:
-    src: "{{ item.1.keyfile | default('/dev/null') }}"
-    dest: "{{ nbde_client_remote_dir }}/"
-    mode: '0400'
-  with_subelements:
-    - "{{ nbde_client_bindings }}"
-    - devices
+    - name: Perform clevis operations
+      nbde_client_clevis:
+        bindings: "{{ nbde_client_bindings | default([]) }}"
+        data_dir: "{{ nbde_client_remote_dir }}"
+      notify: nbde_client update initramfs
 
-
-- name: Perform clevis operations
-  nbde_client_clevis:
-    bindings: "{{ nbde_client_bindings | default([]) }}"
-    data_dir: "{{ nbde_client_remote_dir }}"
-  notify: nbde_client update initramfs
-
-
-- name: Ensure we dispose of any transferred keyfiles
-  file:
-    path: "{{ nbde_client_remote_dir }}/{{ item.1.keyfile | default('/dev/null') | basename }}"  # yamllint disable-line rule:line-length
-    state: absent
-  with_subelements:
-    - "{{ nbde_client_bindings }}"
-    - devices
+  always:
+    - name: Ensure we dispose of any transferred keyfiles
+      file:
+        path: "{{ nbde_client_remote_dir }}/{{ item.1.keyfile | default('/dev/null') | basename }}"  # yamllint disable-line rule:line-length
+        state: absent
+      with_subelements:
+        - "{{ nbde_client_bindings }}"
+        - devices
 
 # vim:set ts=2 sw=2 et:
