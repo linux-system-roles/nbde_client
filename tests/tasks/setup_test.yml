@@ -22,7 +22,7 @@
     nbde_client_test_nbde_server_service is defined
     and nbde_client_test_nbde_server_service != ""
   service:
-    name: "{{ nbde_client_test_nbde_server_service }} "
+    name: "{{ nbde_client_test_nbde_server_service }}"
     enabled: yes
     state: started
 
