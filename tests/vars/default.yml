@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: MIT
+---
+
+nbde_client_test_package_list: []
+nbde_client_test_nbde_server_service: ""
+
+# vim:set ts=2 sw=2 et:

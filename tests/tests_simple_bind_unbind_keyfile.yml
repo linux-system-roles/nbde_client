@@ -2,25 +2,21 @@
 - hosts: all
 
   vars:
-    nbde_client_test_device: /tmp/.nbde_client_dev_test
-    nbde_client_test_pass: test-password-here
-    nbde_client_test_keyfile: /tmp/.nbde_client_dev_keyfile
-
     nbde_client_bindings:
       - devices:
           - path: "{{ nbde_client_test_device }}"
             keyfile: "{{ nbde_client_test_keyfile }}"
         auth:
           servers:
-            - public.nbde.cc
+            - http://localhost
       - devices:
           - path: "{{ nbde_client_test_device }}"
             pass: "{{ nbde_client_test_keyfile }}"
         state: absent
 
   tasks:
-    - name: Set up test device
-      include: tasks/create_dummy_device.yml
+    - name: Set up test environment
+      include: tasks/setup_test.yml
 
     - name: Use nbde_client role
       include_role:
@@ -35,6 +31,6 @@
           - nbde_unlock.failed
           - nbde_close.failed
 
-    - name: Clean up
-      include: tasks/cleanup_dummy_device.yml
+    - name: Clean up test environment
+      include: tasks/cleanup_test.yml
 # vim:set ts=2 sw=2 et:

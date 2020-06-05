@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MIT
+---
+# Put the role's internal variables here that are not distribution specific.
+
+nbde_client_test_device: /tmp/.nbde_client_dev_test
+nbde_client_test_pass: test-password-here
+nbde_client_test_keyfile: /tmp/.nbde_client_dev_keyfile
+
+# vim:set ts=2 sw=2 et:
