@@ -19,7 +19,7 @@
   nbde_client_clevis:
     bindings: "{{ nbde_client_bindings | default([]) }}"
     data_dir: "{{ nbde_client_remote_dir }}"
-  notify: update initramfs
+  notify: nbde_client update initramfs
 
 
 - name: Ensure we dispose of any transferred keyfiles
