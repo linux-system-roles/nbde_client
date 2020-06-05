@@ -18,19 +18,22 @@
     - name: Set up test environment
       include: tasks/setup_test.yml
 
-    - name: Use nbde_client role
-      include_role:
-        name: linux-system-roles.nbde_client
+    - name: Run the test
+      block:
+        - name: Use nbde_client role
+          include_role:
+            name: linux-system-roles.nbde_client
 
-    - name: Attempt to unlock device
-      include: tasks/verify_unlock_device.yml
+        - name: Attempt to unlock device
+          include: tasks/verify_unlock_device.yml
 
-    - name: Make sure the attempt to unlock failed
-      assert:
-        that:
-          - nbde_unlock.failed
-          - nbde_close.failed
+        - name: Make sure the attempt to unlock failed
+          assert:
+            that:
+              - nbde_unlock.failed
+              - nbde_close.failed
 
-    - name: Clean up test environment
-      include: tasks/cleanup_test.yml
+      always:
+        - name: Clean up test environment
+          include: tasks/cleanup_test.yml
 # vim:set ts=2 sw=2 et:
