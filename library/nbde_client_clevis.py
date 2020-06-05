@@ -52,7 +52,7 @@ EXAMPLES = """
     - devices:
         - path: /dev/sda1
           pass: password
-      pin:
+      auth:
         servers:
           - http://tang.server-01
           - http://tang.server-02
@@ -64,7 +64,7 @@ EXAMPLES = """
         - path: /dev/sda1
           pass: password
       state: absent
-      pin:
+      auth:
         slot: 2
 """
 
@@ -1027,7 +1027,7 @@ def bind_slot(module, **kwargs):
     """ Create a clevis binding in a given LUKS device.
     Return <result> <error> """
 
-    for req in ["device", "slot", "pin", "pin_cfg"]:
+    for req in ["device", "slot", "auth", "auth_cfg"]:
         if req not in kwargs:
             return False, {"msg": "{} is a required parameter".format(req)}
 
@@ -1056,7 +1056,7 @@ def bind_slot(module, **kwargs):
 
     # At this point we can proceed to bind.
     key, jwe, err = new_pass_jwe(
-        module, kwargs["device"], kwargs["pin"], kwargs["pin_cfg"]
+        module, kwargs["device"], kwargs["auth"], kwargs["auth_cfg"]
     )
     if err:
         return False, err
@@ -1131,29 +1131,29 @@ def bindings_sanity_check(bindings, data_dir):
                 keyfile = os.path.join(data_dir, basefile)
                 bindings[idx]["devices"][didx]["keyfile"] = cmd_quote(keyfile)
 
-        if "pin" not in dev_group:
+        if "auth" not in dev_group:
             if dev_group["state"] != "absent":
-                errmsg = "We need pin configuration when state is not absent"
+                errmsg = "We need auth configuration when state is not absent"
                 return None, {"msg": errmsg}
             # Adding the one information we need for unbind.
-            bindings[idx]["pin"] = {"slot": 1}
+            bindings[idx]["auth"] = {"slot": 1}
             continue
 
         # Make sure we have the list of servers properly set.
-        if "servers" not in dev_group["pin"]:
-            bindings[idx]["pin"]["servers"] = list()
+        if "servers" not in dev_group["auth"]:
+            bindings[idx]["auth"]["servers"] = list()
 
-        # The defaults for the pin attributes.
-        pin_defaults = {
+        # The defaults for the auth attributes.
+        auth_defaults = {
             "slot": 1,
             "threshold": 1,
             "overwrite": False,
             "discard_passphrase": False,
         }
 
-        for attr in pin_defaults:
-            if attr not in dev_group["pin"]:
-                bindings[idx]["pin"][attr] = pin_defaults[attr]
+        for attr in auth_defaults:
+            if attr not in dev_group["auth"]:
+                bindings[idx]["auth"][attr] = auth_defaults[attr]
 
     return bindings, None
 
@@ -1170,11 +1170,11 @@ def process_bindings(module, bindings):
     for dev_group in bindings:
         state = dev_group["state"]
         if state != "absent":
-            pin_name, cfg, err = generate_config(module, dev_group["pin"])
+            auth_name, cfg, err = generate_config(module, dev_group["auth"])
             if err:
                 NbdeClientClevisError(dict(msg=err))
 
-        slot = dev_group["pin"]["slot"]
+        slot = dev_group["auth"]["slot"]
         for device in dev_group["devices"]:
             if dev_group["state"] == "absent":
                 _, err = is_slot_bound(module, device["path"], slot)
@@ -1183,7 +1183,7 @@ def process_bindings(module, bindings):
                     continue
                 _, err = unbind_slot(module, device["path"], slot)
             else:
-                overwrite = dev_group["pin"]["overwrite"]
+                overwrite = dev_group["auth"]["overwrite"]
                 bound, _ = is_slot_bound(module, device["path"], slot)
                 if bound and not overwrite:
                     result["msg"] = "{}:{} is bound and no overwrite set".format(
@@ -1192,7 +1192,7 @@ def process_bindings(module, bindings):
                     continue
 
                 passphrase = device.get("pass", None)
-                discard_pw = dev_group["pin"].get("discard_passphrase", False)
+                discard_pw = dev_group["auth"].get("discard_passphrase", False)
                 if not passphrase:
                     passphrase = device.get("keyfile", None)
                 is_keyfile = "keyfile" in device
@@ -1201,8 +1201,8 @@ def process_bindings(module, bindings):
                     module,
                     device=device["path"],
                     slot=slot,
-                    pin=pin_name,
-                    pin_cfg=cfg,
+                    auth=auth_name,
+                    auth_cfg=cfg,
                     passphrase=passphrase,
                     is_keyfile=is_keyfile,
                     overwrite=overwrite,

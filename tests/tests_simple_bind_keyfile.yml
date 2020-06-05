@@ -10,7 +10,7 @@
       - devices:
           - path: "{{ test_device }}"
             keyfile: "{{ test_keyfile }}"
-        pin:
+        auth:
           servers:
             - public.nbde.cc
 

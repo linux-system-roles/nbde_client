@@ -7,7 +7,7 @@
       - devices:
           - path: /tmp/sda1
             pass: password
-        pin:
+        auth:
           slot: 2
         state: absent
 

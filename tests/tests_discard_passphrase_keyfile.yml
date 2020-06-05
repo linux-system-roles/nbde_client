@@ -10,13 +10,13 @@
       - devices:
           - path: "{{ test_device }}"
             keyfile: "{{ test_keyfile }}"
-        pin:
+        auth:
           discard_passphrase: yes
           servers:
             - public.nbde.cc
       - devices:
           - path: "{{ test_device }}"
-        pin:
+        auth:
           overwrite: yes
           servers:
             - public.nbde.cc

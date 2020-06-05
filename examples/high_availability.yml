@@ -7,7 +7,7 @@
       - devices:
           - path: /dev/sda1
             pass: password
-        pin:
+        auth:
           servers:
             - http://tang.server01
             - http://tang.server02

@@ -37,7 +37,7 @@ These are the variables that can be passed to the role:
 | **Name** | **Default/Choices** | **Description** |
 |----------|-------------|------|
 |`devices` | | specifies LUKS devices, with their path and possibly either a passphrase or key file.|
-|`pin` | | the settings for the binding, like the servers it should bind to. |
+|`auth` | | the settings for the binding, like the servers it should bind to. |
 | `state` | **present** / absent | specifies whether the binding with the configuration described should be added or removed. Setting `state` to `present` (the default) means bindings will be added; setting `state` to `absent` means bindings will be removed from the devices/slots. |
 
 
@@ -58,8 +58,8 @@ Example:
       keyfile: /vault/keyfile
 ```
 
-##### pin
-`pin` supports the following keys:
+##### auth
+`auth` supports the following keys:
 | **Name** | **Default/Choices** | **Description** |
 |----------|-------------|------|
 | `slot` | `1` | specifies the slot to use for the binding. |
@@ -71,7 +71,7 @@ Example:
 
 Example:
 ```yaml
-pin:
+auth:
   slot: 3
   servers:
     - http://tang.server01
@@ -94,7 +94,7 @@ Example Playbooks
       - devices:
           - path: /dev/sda1
             pass: passphrase
-        pin:
+        auth:
           servers:
             - http://tang.server01
             - http://tang.server02
@@ -113,7 +113,7 @@ Example Playbooks
       - devices:
           - path: /dev/sda1
             pass: passphrase
-        pin:
+        auth:
           slot: 2
         state: absent
   roles:

@@ -9,7 +9,7 @@
       - devices:
           - path: "{{ test_device }}"
             pass: "{{ test_pass }}"
-        pin:
+        auth:
           servers:
             - public.nbde.cc
 

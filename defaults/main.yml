@@ -8,12 +8,12 @@ nbde_client_provider: clevis
 
 
 # nbde_client_bindings - the description of the devices, that may also contain
-# a pin configuration for each group of devices.
+# an auth configuration for each group of devices.
 #
 # nbde_client_bindings supports the following keys:
 #  * devices - specifies LUKS devices, with their path and possibly either a
 #              passphrase or key file.
-#  * pin     - the settings for the binding, like the servers it should bind
+#  * auth    - the settings for the binding, like the servers it should bind
 #              to.
 #  * state   - specifies whether the binding with the configuration described
 #              should be added or removed. Setting state to present (the
@@ -35,7 +35,7 @@ nbde_client_provider: clevis
 #      keyfile: /vault/keyfile
 #
 #
-# pin supports the following keys:
+# auth supports the following keys:
 # * slot               - specifies the slot to use for the binding. Default
 #                        is 1.
 # * servers            - specifies a list of servers to bind to. To enable
@@ -54,7 +54,7 @@ nbde_client_provider: clevis
 #
 # Example:
 #
-# pin:
+# auth:
 #  slot: 3
 #  servers:
 #    - http://tang.server01
@@ -68,7 +68,7 @@ nbde_client_provider: clevis
 #   - devices:
 #       - path: /dev/sda1
 #        pass: password
-#     pin:
+#     auth:
 #       servers:
 #         - http://tang.server01
 #         - http://tang.server02
