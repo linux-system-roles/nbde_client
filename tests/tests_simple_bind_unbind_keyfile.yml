@@ -20,14 +20,14 @@
 
   tasks:
     - name: Set up test device
-      include: create_dummy_device.yml
+      include: tasks/create_dummy_device.yml
 
     - name: Use nbde_client role
       include_role:
         name: linux-system-roles.nbde_client
 
     - name: Attempt to unlock device
-      include: verify_unlock_device.yml
+      include: tasks/verify_unlock_device.yml
 
     - name: Make sure the attempt to unlock failed
       assert:
@@ -36,5 +36,5 @@
           - nbde_close.failed
 
     - name: Clean up
-      include: cleanup_dummy_device.yml
+      include: tasks/cleanup_dummy_device.yml
 # vim:set ts=2 sw=2 et:
