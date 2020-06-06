@@ -65,7 +65,7 @@ Example:
 | `slot` | `1` | specifies the slot to use for the binding. |
 |`servers` | | specifies a list of servers to bind to. To enable high availability, simply specify more than one server here. |
 | `threshold` | `1` | specifies the threshold for the Shamir Secret Sharing (SSS) scheme that is put in place when using more than one server. When using multiple servers, `threshold` indicates how many of those servers should succeed in order to complete the decryption.
-| `overwrite` | `no` | specifies whether we should override any existing binding in the specified slot.
+| `overwrite` | `yes` | specifies whether we should override any existing binding in the specified slot.
 |`discard_passphrase` |  `no` | specifies whether we should discard the passphrase provided  -- via either `pass` or `keyfile`, in `devices` -- after completing the binding operation.
 
 

@@ -1039,7 +1039,7 @@ def bind_slot(module, **kwargs):
         if req not in kwargs:
             return False, {"msg": "{} is a required parameter".format(req)}
 
-    overwrite = kwargs.get("overwrite", False)
+    overwrite = kwargs.get("overwrite", True)
     discard_pw = kwargs.get("discard_passphrase", False)
 
     _, err = can_bind_slot(module, kwargs["device"], kwargs["slot"], overwrite)
