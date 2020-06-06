@@ -923,6 +923,14 @@ def new_pass_jwe(module, device, pin, pin_cfg):
     ret, jwe, err = module.run_command(args, data=key, binary_data=True)
     if ret != 0:
         return None, None, {"msg": err}
+
+    # clevis encrypt can be buggy and return 0 even if it actually failed.
+    # Let's try to decrypt the jwe to make sure the operation was actually
+    # successful.
+    decrypted, err = decrypt_jwe(module, jwe)
+    if err or decrypted != key:
+        return None, None, {"msg": "Error generating new passphrase"}
+
     return key, jwe, None
 
 
