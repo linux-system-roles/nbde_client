@@ -1,10 +1,8 @@
 # SPDX-License-Identifier: MIT
 ---
-# Put internal variables here with Red Hat Enterprise Linux 7 specific values.
+# Put tests variables here with Red Hat Enterprise Linux 7 specific values.
 
-nbde_client_test_package_list:
-  - tang
-
-nbde_client_test_nbde_server_service: tangd.socket
+nbde_client_test_packages:
+  - cryptsetup
 
 # vim:set ts=2 sw=2 et:

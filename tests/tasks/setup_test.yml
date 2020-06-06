@@ -1,6 +1,7 @@
 ---
-- name: Include general variables
+- name: Include general tests variables
   include_vars: main.yml
+
 
 - name: Set version specific variables
   include_vars: "{{ item }}"
@@ -14,17 +15,26 @@
 
 - name: Install required packages for nbde_client tests
   package:
-    name: "{{ nbde_client_test_package_list }}"
+    name: "{{ nbde_client_test_packages }}"
+
+- name: Check whether nbde_server role is available
+  stat:
+    path: "{{ playbook_dir }}/roles/linux-system-roles.nbde_server"
+  delegate_to: localhost
+  register: nbde_client_stat
 
 
-- name: Start nbde_server
-  when: >
-    nbde_client_test_nbde_server_service is defined
-    and nbde_client_test_nbde_server_service != ""
-  service:
-    name: "{{ nbde_client_test_nbde_server_service }}"
-    enabled: yes
-    state: started
+- name: Download nbde_server role for testing, if required
+  command: >
+    git clone https://github.com/linux-system-roles/nbde_server
+    {{ playbook_dir }}/roles/linux-system-roles.nbde_server
+  delegate_to: localhost
+  when: not nbde_client_stat.stat.exists
+
+
+- name: Deploy NBDE server for testing
+  include_role:
+    name: linux-system-roles.nbde_server
 
 
 - name: Create device for testing

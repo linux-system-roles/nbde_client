@@ -1,10 +1,8 @@
 # SPDX-License-Identifier: MIT
 ---
-# Put internal variables here with Fedora specific values.
+# Put tests variables here with Fedora specific values.
 
-nbde_client_test_package_list:
-  - tang
-
-nbde_client_test_nbde_server_service: tangd.socket
+nbde_client_test_packages:
+  - cryptsetup
 
 # vim:set ts=2 sw=2 et:
