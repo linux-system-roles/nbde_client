@@ -8,5 +8,6 @@
   file:
     path: "{{ nbde_client_test_keyfile }}"
     state: absent
+  delegate_to: localhost
 
 # vim:set ts=2 sw=2 et:
