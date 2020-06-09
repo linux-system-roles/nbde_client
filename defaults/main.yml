@@ -45,14 +45,4 @@ nbde_client_provider: clevis
 #        - http://server2.example.com
 nbde_client_bindings: []
 
-# nbde_client_remote_dir specifies a directory in the remote hosts that may
-# be used for storing temporary data such as transferred keyfiles.
-# Default is /root/.local/share/nbde_client/.
-nbde_client_remote_dir: /root/.local/share/nbde_client/
-
-# nbde_client_update_initramfs indicates whether the initramfs should be
-# updated in case changes are made when processing the clevis operations
-# on the devices. Default is yes.
-nbde_client_update_initramfs: yes
-
 # vim:set ts=2 sw=2 et:

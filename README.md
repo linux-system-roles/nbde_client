@@ -27,9 +27,7 @@ These are the variables that can be passed to the role:
 | **Variable** | **Default/Choices** | **Description** |
 |----------|-------------|------|
 | `nbde_client_provider` | `clevis`| identifies the provider for the `nbde_client` role. We currently support `clevis`.|
-| `nbde_client_bindings` | | a list containing binding configurations, which include e.g. devices and slots.
-|`nbde_client_remote_dir` | `/root/.local/share/nbde_client/` |  specifies a directory in the remote hosts that may be used for storing temporary data such as transferred keyfiles. |
-|`nbde_client_update_initramfs` | `yes` | indicates whether the initramfs should be updated in case changes are made when processing the clevis operations on the devices.|
+| `nbde_client_bindings` | | a list containing binding configurations, which include e.g. devices and slots. |
 
 
 #### nbde_client_bindings

@@ -2,10 +2,10 @@
 ---
 # handlers file for nbde_client.
 - name: nbde_client update initramfs
-  when: >
-    nbde_client_update_initramfs
-    and __nbde_client_initramfs_update_cmd is defined
-    and __nbde_client_initramfs_update_cmd != ""
+  when:
+    - __nbde_client_update_initramfs | bool
+    - __nbde_client_initramfs_update_cmd is defined
+    - __nbde_client_initramfs_update_cmd != ""
   command: "{{ __nbde_client_initramfs_update_cmd }}"
 
 # vim:set ts=2 sw=2 et:

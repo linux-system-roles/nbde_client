@@ -10,20 +10,20 @@
     - name: Ensure we transfer keyfiles
       copy:
         src: "{{ item.keyfile | default('/dev/null') }}"
-        dest: "{{ nbde_client_remote_dir }}/"
+        dest: "{{ __nbde_client_managed_dir }}/"
         mode: '0400'
       loop: "{{ nbde_client_bindings }}"
 
     - name: Perform clevis operations
       nbde_client_clevis:
         bindings: "{{ nbde_client_bindings | default([]) }}"
-        data_dir: "{{ nbde_client_remote_dir }}"
+        data_dir: "{{ __nbde_client_managed_dir }}"
       notify: nbde_client update initramfs
 
   always:
     - name: Ensure we dispose of any transferred keyfiles
       file:
-        path: "{{ nbde_client_remote_dir }}/{{ item.keyfile | default('/dev/null') | basename }}"  # yamllint disable-line rule:line-length
+        path: "{{ __nbde_client_managed_dir }}/{{ item.keyfile | default('/dev/null') | basename }}"  # yamllint disable-line rule:line-length
         state: absent
       loop: "{{ nbde_client_bindings }}"
 
