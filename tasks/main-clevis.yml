@@ -9,12 +9,16 @@
   block:
     - name: Ensure we transfer keyfiles
       copy:
-        src: "{{ item.keyfile | default('/dev/null') }}"
+        src: "{{ item.keyfile }}"
         dest: "{{ __nbde_client_managed_dir }}/"
         mode: '0400'
+      when:
+        - nbde_client_bindings | default([])
+        - item.keyfile | default("")
       loop: "{{ nbde_client_bindings }}"
 
     - name: Perform clevis operations
+      when: nbde_client_bindings | default([])
       nbde_client_clevis:
         bindings: "{{ nbde_client_bindings | default([]) }}"
         data_dir: "{{ __nbde_client_managed_dir }}"
@@ -23,8 +27,11 @@
   always:
     - name: Ensure we dispose of any transferred keyfiles
       file:
-        path: "{{ __nbde_client_managed_dir }}/{{ item.keyfile | default('/dev/null') | basename }}"  # yamllint disable-line rule:line-length
+        path: "{{ __nbde_client_managed_dir }}/{{ item.keyfile | basename }}"
         state: absent
+      when:
+        - nbde_client_bindings | default([])
+        - item.keyfile | default("")
       loop: "{{ nbde_client_bindings }}"
 
 # vim:set ts=2 sw=2 et:
