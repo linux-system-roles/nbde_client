@@ -37,7 +37,7 @@
         - name: Make sure the default passphrase did not work
           assert:
             that:
-            - nbde_client_passphrase is not success
+              - nbde_client_passphrase is not success
 
       always:
         - name: Clean up test environment
