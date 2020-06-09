@@ -87,7 +87,6 @@ Example Playbooks
 ```yaml
 ---
 - hosts: all
-  become: true
 
   vars:
     nbde_client_bindings:
@@ -106,7 +105,6 @@ Example Playbooks
 ```yaml
 ---
 - hosts: all
-  become: true
 
   vars:
     nbde_client_bindings:
