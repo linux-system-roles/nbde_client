@@ -1,11 +1,7 @@
 # SPDX-License-Identifier: MIT
 ---
-# Here is the right place to put the role's input variables.
-# This file also serves as a documentation for such a variables.
-
 # The provider for nbde_client role. Currently 'clevis' is supported.
 nbde_client_provider: clevis
-
 
 # nbde_client_bindings - the description of the devices, that may also contain
 # an auth configuration for each group of devices.
