@@ -37,7 +37,7 @@
         - name: Make sure the default keyfile did not work
           assert:
             that:
-              - nbde_client_keyfile.rc != 0
+              - nbde_client_keyfile is not success
 
       always:
         - name: Clean up test environment
