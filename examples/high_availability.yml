@@ -3,13 +3,11 @@
 
   vars:
     nbde_client_bindings:
-      - devices:
-          - path: /dev/sda1
-            pass: password
-        auth:
-          servers:
-            - http://server1.example.com
-            - http://server2.example.com
+      - device: /dev/sda1
+        pass: password
+        servers:
+          - http://server1.example.com
+          - http://server2.example.com
   roles:
     - linux-system-roles.nbde_client
 # vim:set ts=2 sw=2 et:

@@ -3,19 +3,14 @@
 
   vars:
     nbde_client_bindings:
-      - devices:
-          - path: "{{ nbde_client_test_device }}"
-            keyfile: "{{ nbde_client_test_keyfile }}"
-        auth:
-          discard_passphrase: yes
-          servers:
-            - http://localhost
-      - devices:
-          - path: "{{ nbde_client_test_device }}"
-        auth:
-          overwrite: yes
-          servers:
-            - http://localhost
+      - device: "{{ nbde_client_test_device }}"
+        keyfile: "{{ nbde_client_test_keyfile }}"
+        discard_passphrase: yes
+        servers:
+          - http://localhost
+      - device: "{{ nbde_client_test_device }}"
+        servers:
+          - http://localhost
 
   tasks:
     - name: Set up test environment

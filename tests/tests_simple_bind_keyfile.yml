@@ -3,12 +3,10 @@
 
   vars:
     nbde_client_bindings:
-      - devices:
-          - path: "{{ nbde_client_test_device }}"
-            keyfile: "{{ nbde_client_test_keyfile }}"
-        auth:
-          servers:
-            - http://localhost
+      - device: "{{ nbde_client_test_device }}"
+        keyfile: "{{ nbde_client_test_keyfile }}"
+        servers:
+          - http://localhost
 
   tasks:
     - name: Set up test environment

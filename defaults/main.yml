@@ -3,35 +3,19 @@
 # The provider for nbde_client role. Currently 'clevis' is supported.
 nbde_client_provider: clevis
 
-# nbde_client_bindings - the description of the devices, that may also contain
-# an auth configuration for each group of devices.
+# nbde_client_bindings is a list, and its elements support the following keys:
 #
-# nbde_client_bindings supports the following keys:
-#  * devices - specifies LUKS devices, with their path and possibly either a
-#              passphrase or key file.
-#  * auth    - the settings for the binding, like the servers it should bind
-#              to.
-#  * state   - specifies whether the binding with the configuration described
-#              should be added or removed. Setting state to present (the
-#              default) means bindings will be added; setting state to absent
-#              means bindings will be removed from the devices/slots.
+# * device             - specifies the path of a LUKS device. (REQUIRED)
+# * pass               - specifies a valid passphrase for this device.
+# * keyfile            - specifies either the absolute or relative path of a
+#                        valid keyfile for the device pointed out by device.
 #
+#  * state             - specifies whether a binding with the configuration
+#                        described should be added or removed. Setting state
+#                        to present (the default) means a binding will be
+#                        added; setting state to absent means a binding will
+#                        be removed from the device/slot.
 #
-# devices supports the following keys:
-# * path    - specifies the path to access this device (REQUIRED).
-# * pass    - specifies a valid passphrase for this device.
-# * keyfile - specifies either the absolute or relative path of a valid key
-#             file for this device.
-#
-# Example:
-# - devices:
-#    - path: /dev/sda1
-#      pass: password
-#    - path: /dev/sda2
-#      keyfile: /vault/keyfile
-#
-#
-# auth supports the following keys:
 # * slot               - specifies the slot to use for the binding. Default
 #                        is 1.
 # * servers            - specifies a list of servers to bind to. To enable
@@ -41,34 +25,24 @@ nbde_client_provider: clevis
 #                        (SSS) scheme that is put in place when using more
 #                        than one server. When using multiple servers,
 #                        threshold indicates how many of those servers should
-#                        succeed in order to complete the decryption.
-# * overwrite          - specifies whether we should override any existing
-#                        binding in the specified slot.
+#                        succeed, in terms of decryption, in order to complete
+#                        the process of recovering the LUKS passphrase to open
+#                        the device.
 # * discard_passphrase - specifies whether we should discard the passphrase
 #                        provided -- via either pass or keyfile, in devices
 #                        -- after completing the binding operation.
-#
+
 # Example:
-#
-# auth:
-#  slot: 3
-#  servers:
-#    - http://server1.example.com
-#    - http://server2.example.com
-#  overwrite: yes
-#
-#
-# Example for nbde_client_bindings:
-#
 # nbde_client_bindings:
-#   - devices:
-#       - path: /dev/sda1
-#        pass: password
-#     auth:
-#       servers:
-#         - http://server1.example.com
-#         - http://server2.example.com
-#    state: present
+#    - device: /dev/sda1
+#      keyfile: /vault/keyfile
+#      state: present
+#      slot: 2
+#      threshold: 1
+#      discard_passphrase: no
+#      servers:
+#        - http://server1.example.com
+#        - http://server2.example.com
 nbde_client_bindings: []
 
 # nbde_client_remote_dir specifies a directory in the remote hosts that may

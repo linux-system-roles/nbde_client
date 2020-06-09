@@ -251,16 +251,16 @@ def download_adv(module, server):
     return adv_json, None
 
 
-def generate_config(module, pin_cfg):
+def generate_config(module, servers, threshold):
     """ Creates the config to be used when binding a group of devices.
     Return: <pin> <config> <error> """
 
     # No servers, so there is nothing to do here.
-    if "servers" not in pin_cfg or len(pin_cfg["servers"]) == 0:
+    if not servers or len(servers) == 0:
         return None, None, None
 
     nbde_servers = []
-    for server in pin_cfg["servers"]:
+    for server in servers:
         adv, err = download_adv(module, server)
         if err:
             return None, None, err
@@ -268,8 +268,8 @@ def generate_config(module, pin_cfg):
         nbde_servers.append(json_cfg)
 
     # Multiple servers -> sss pin.
-    if len(pin_cfg["servers"]) > 1:
-        cfg = {"t": pin_cfg["threshold"], "pins": {"tang": nbde_servers}}
+    if len(servers) > 1:
+        cfg = {"t": threshold, "pins": {"tang": nbde_servers}}
         return "sss", json.dumps(cfg), None
 
     # Single server -> tang pin.
@@ -1114,54 +1114,50 @@ def bindings_sanity_check(bindings, data_dir):
     """ Performs sanity-checking on the bindings list and related arguments.
     Return: <bindings> <error> """
 
-    errstate = 'state in a group of devices must be "present" or "absent"'
-
+    # bindings is a list of the following:
+    # {
+    #   device: [REQUIRED]
+    #   pass
+    #   keyfile
+    #   slot: 1 (default)
+    #   state: present (default) | absent
+    #   discard_passphrase: no (default)
+    #   threshold: 1 (default)
+    #   servers: [] (default)
+    # }
     if not bindings:
         return None, {"msg": "No devices set"}
 
-    for idx, dev_group in enumerate(bindings):
-        # Set up the operation.
-        if "state" not in dev_group:
+    for idx, binding in enumerate(bindings):
+        # Set up the state.
+        if "state" not in binding:
             bindings[idx]["state"] = "present"
         else:
-            if dev_group["state"] not in ["present", "absent"]:
-                return None, {"msg": errstate}
-        # Make sure we have the required information for the devices.
-        for didx, device in enumerate(dev_group["devices"]):
-            if "path" not in device:
-                errmsg = "Each device must have a path set"
+            if binding["state"] not in ["present", "absent"]:
+                errmsg = "state must be present or absent"
                 return None, {"msg": errmsg}
 
-            bindings[idx]["devices"][didx]["path"] = cmd_quote(device["path"])
+        # Make sure we have the required information for the binding.
+        if "device" not in binding:
+            errmsg = "Each binding must have a device set"
+            return None, {"msg": errmsg}
 
-            if "keyfile" in device:
-                basefile = os.path.basename(device["keyfile"])
-                keyfile = os.path.join(data_dir, basefile)
-                bindings[idx]["devices"][didx]["keyfile"] = cmd_quote(keyfile)
+        if "keyfile" in binding:
+            basefile = os.path.basename(binding["keyfile"])
+            keyfile = os.path.join(data_dir, basefile)
+            bindings[idx]["keyfile"] = cmd_quote(keyfile)
 
-        if "auth" not in dev_group:
-            if dev_group["state"] != "absent":
-                errmsg = "We need auth configuration when state is not absent"
-                return None, {"msg": errmsg}
-            # Adding the one information we need for unbind.
-            bindings[idx]["auth"] = {"slot": 1}
-            continue
-
-        # Make sure we have the list of servers properly set.
-        if "servers" not in dev_group["auth"]:
-            bindings[idx]["auth"]["servers"] = list()
-
-        # The defaults for the auth attributes.
-        auth_defaults = {
+        # The defaults for the remaining binding attributes.
+        binding_defaults = {
             "slot": 1,
             "threshold": 1,
-            "overwrite": False,
             "discard_passphrase": False,
+            "servers": [],
         }
 
-        for attr in auth_defaults:
-            if attr not in dev_group["auth"]:
-                bindings[idx]["auth"][attr] = auth_defaults[attr]
+        for attr in binding_defaults:
+            if attr not in bindings[idx]:
+                bindings[idx][attr] = binding_defaults[attr]
 
     return bindings, None
 
@@ -1175,53 +1171,44 @@ def process_bindings(module, bindings):
     if module.check_mode:
         return result
 
-    for dev_group in bindings:
-        state = dev_group["state"]
-        if state != "absent":
-            auth_name, cfg, err = generate_config(module, dev_group["auth"])
+    for binding in bindings:
+        if binding["state"] != "absent":
+            auth_name, cfg, err = generate_config(
+                module, binding["servers"], binding["threshold"]
+            )
             if err:
-                NbdeClientClevisError(dict(msg=err))
+                raise NbdeClientClevisError(dict(msg=err))
 
-        slot = dev_group["auth"]["slot"]
-        for device in dev_group["devices"]:
-            if dev_group["state"] == "absent":
-                _, err = is_slot_bound(module, device["path"], slot)
-                if err:
-                    # Slot not bound, moving on.
-                    continue
-                _, err = unbind_slot(module, device["path"], slot)
-            else:
-                overwrite = dev_group["auth"]["overwrite"]
-                bound, _ = is_slot_bound(module, device["path"], slot)
-                if bound and not overwrite:
-                    result["msg"] = "{}:{} is bound and no overwrite set".format(
-                        device["path"], slot
-                    )
-                    continue
-
-                passphrase = device.get("pass", None)
-                discard_pw = dev_group["auth"].get("discard_passphrase", False)
-                if not passphrase:
-                    passphrase = device.get("keyfile", None)
-                is_keyfile = "keyfile" in device
-
-                _, err = bind_slot(
-                    module,
-                    device=device["path"],
-                    slot=slot,
-                    auth=auth_name,
-                    auth_cfg=cfg,
-                    passphrase=passphrase,
-                    is_keyfile=is_keyfile,
-                    overwrite=overwrite,
-                    discard_passphrase=discard_pw,
-                )
-
+        slot = binding["slot"]
+        if binding["state"] == "absent":
+            _, err = is_slot_bound(module, binding["device"], slot)
             if err:
-                err["original_bindings"] = original_bindings
-                raise NbdeClientClevisError(err)
-            result["changed"] = True
+                # Slot not bound, moving on.
+                continue
+            _, err = unbind_slot(module, binding["device"], binding["slot"])
+        else:
+            passphrase = binding.get("pass", None)
+            if not passphrase:
+                passphrase = binding.get("keyfile", None)
+            is_keyfile = "keyfile" in binding
 
+            _, err = bind_slot(
+                module,
+                device=binding["device"],
+                slot=binding["slot"],
+                auth=auth_name,
+                auth_cfg=cfg,
+                passphrase=passphrase,
+                is_keyfile=is_keyfile,
+                overwrite=True,
+                discard_passphrase=binding["discard_passphrase"],
+            )
+
+        if err:
+            err["original_bindings"] = original_bindings
+            raise NbdeClientClevisError(err)
+
+        result["changed"] = True
     return result
 
 
@@ -1237,6 +1224,7 @@ def run_module():
     params = module.params
 
     bindings, err = bindings_sanity_check(params["bindings"], params["data_dir"])
+
     if err:
         err["changed"] = False
         result = err

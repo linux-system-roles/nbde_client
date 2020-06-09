@@ -3,11 +3,9 @@
 
   vars:
     nbde_client_bindings:
-      - devices:
-          - path: /tmp/sda1
-            pass: password
-        auth:
-          slot: 2
+      - device: /tmp/sda1
+        pass: password
+        slot: 2
         state: absent
 
   roles:
