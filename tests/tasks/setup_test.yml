@@ -38,7 +38,7 @@
 
 
 - name: Create device for testing
-  shell: fallocate -l64m {{ nbde_client_test_device }}
+  command: fallocate -l64m {{ nbde_client_test_device }}
 
 
 - name: Format test device as LUKS

@@ -1,6 +1,6 @@
 ---
 - name: Verify the default keyfile works
-  shell: >
+  command: >
     cryptsetup open --test-passphrase "{{ nbde_client_test_device }}"
     --key-file "{{ nbde_client_test_keyfile }}"
   ignore_errors: yes
