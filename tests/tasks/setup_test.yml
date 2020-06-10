@@ -17,24 +17,18 @@
   package:
     name: "{{ nbde_client_test_packages }}"
 
-- name: Check whether nbde_server role is available
-  stat:
-    path: "{{ playbook_dir }}/roles/linux-system-roles.nbde_server"
-  delegate_to: localhost
-  register: nbde_client_stat
 
-
-- name: Download nbde_server role for testing, if required
-  command: >
-    git clone https://github.com/linux-system-roles/nbde_server
-    {{ playbook_dir }}/roles/linux-system-roles.nbde_server
+- name: Clone nbde_server role for the tests
+  git:
+    repo: https://github.com/linux-system-roles/nbde_server
+    dest: "{{ nbde_client_test_roles_dir }}/linux-system-roles.nbde_server"
   delegate_to: localhost
-  when: not nbde_client_stat.stat.exists
+  become: false
 
 
 - name: Deploy NBDE server for testing
   include_role:
-    name: linux-system-roles.nbde_server
+    name: "{{ nbde_client_test_roles_dir }}/linux-system-roles.nbde_server"
 
 
 - name: Create device for testing
