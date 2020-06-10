@@ -11,5 +11,4 @@
           loop:
             - nbde_client_provider
             - nbde_client_bindings
-          when: "ansible_version.full is version_compare('2.7', '>=')"
 # vim:set ts=2 sw=2 et:
