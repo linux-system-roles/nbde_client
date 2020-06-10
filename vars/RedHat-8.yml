@@ -2,7 +2,7 @@
 ---
 # Put internal variables here with Red Hat Enterprise Linux 8 specific values.
 
-__nbde_client_package_list:
+__nbde_client_packages:
   - clevis
   - clevis-dracut
   - clevis-luks

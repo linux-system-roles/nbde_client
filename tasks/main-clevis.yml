@@ -1,7 +1,7 @@
 ---
 - name: Ensure required packages are installed
   package:
-    name: "{{ __nbde_client_package_list }}"
+    name: "{{ __nbde_client_packages }}"
     state: present
 
 
