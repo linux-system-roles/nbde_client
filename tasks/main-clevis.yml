@@ -13,7 +13,6 @@
         dest: "{{ __nbde_client_managed_dir }}/"
         mode: '0400'
       when:
-        - nbde_client_bindings | default([])
         - item.keyfile | default("")
       loop: "{{ nbde_client_bindings }}"
 
@@ -30,7 +29,6 @@
         path: "{{ __nbde_client_managed_dir }}/{{ item.keyfile | basename }}"
         state: absent
       when:
-        - nbde_client_bindings | default([])
         - item.keyfile | default("")
       loop: "{{ nbde_client_bindings }}"
 
