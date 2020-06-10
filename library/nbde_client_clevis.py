@@ -30,7 +30,7 @@ DOCUMENTATION = """
 ---
 module: nbde_client_clevis
 short_description: Handle clevis-related operations on LUKS devices
-version_added: "2.5"
+version_added: "2.9"
 description:
     - "Module manages clevis bindings on LUKS devices to match the state
        specified in input parameters.
