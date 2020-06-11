@@ -37,7 +37,7 @@ These are the variables that can be passed to the role:
 | `device` | | specifies the path of a LUKS device (**REQUIRED**). |
 | `state` | **present** / absent | specifies whether a binding with the configuration described should be added or removed. Setting state to present (the default) means a binding will be added; setting state to absent means a binding will be removed from the device/slot. |
 | `slot` | `1` | specifies the slot to use for the binding. |
-| `servers` | |  specifies a list of servers to bind to. To enable high availability, simply specify more than one server here. |
+| `servers` | |  specifies a list of servers to bind to. To enable high availability, specify more than one server here. |
 | `threshold` | `1` | specifies the threshold for the Shamir Secret Sharing (SSS) scheme that is put in place when using more than one server. When using multiple servers, threshold indicates how many of those servers should succeed, in terms of decryption, in order to complete the process of recovering the LUKS passphrase to open the device. |
 | `discard_passphrase` | `no` | specifies whether we should discard the passphrase provided -- via either pass or keyfile, in devices from the LUKS device, after completing the binding operation. |
 

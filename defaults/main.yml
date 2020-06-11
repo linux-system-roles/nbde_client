@@ -19,8 +19,7 @@ nbde_client_provider: clevis
 # * slot               - specifies the slot to use for the binding. Default
 #                        is 1.
 # * servers            - specifies a list of servers to bind to. To enable
-#                        high availability, simply specify more than one server
-#                        here.
+#                        high availability, specify more than one server here.
 # * threshold          - specifies the threshold for the Shamir Secret Sharing
 #                        (SSS) scheme that is put in place when using more
 #                        than one server. When using multiple servers,
