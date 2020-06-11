@@ -832,7 +832,7 @@ def unbind_slot_luks1(module, device, slot):
     Return <result> <error> """
     _, err = get_jwe_luks1(module, device, slot)
     if err:
-        errmsg = "{}:{} is not bound to clevs".format(device, slot)
+        errmsg = "{}:{} is not bound to clevis".format(device, slot)
         return False, {"msg": errmsg}
 
     cmds = []
@@ -851,10 +851,10 @@ def unbind_slot_luks1(module, device, slot):
 def unbind_slot_luks2(module, device, slot):
     """ Unbind slot in a LUKS2 device. This involves removing both the clevis
     metadata as well as its associated keyslot.
-    Retrurn <result> <error> """
+    Return <result> <error> """
     _, token_id, err = get_jwe_luks2(module, device, slot)
     if err:
-        errmsg = "{}:{} is not bound to clevs".format(device, slot)
+        errmsg = "{}:{} is not bound to clevis".format(device, slot)
         return False, {"msg": errmsg}
 
     cmds = []
