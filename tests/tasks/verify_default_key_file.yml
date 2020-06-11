@@ -1,9 +1,9 @@
 ---
-- name: Verify the default keyfile works
+- name: Verify the default key file works
   command: >
     cryptsetup open --test-passphrase "{{ nbde_client_test_device }}"
-    --key-file "{{ nbde_client_test_keyfile }}"
+    --key-file "{{ nbde_client_test_key_file }}"
   ignore_errors: yes
-  register: nbde_client_keyfile
+  register: nbde_client_key_file
 
 # vim:set ts=2 sw=2 et:

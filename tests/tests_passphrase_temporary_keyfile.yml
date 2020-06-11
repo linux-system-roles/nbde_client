@@ -4,7 +4,7 @@
   vars:
     nbde_client_bindings:
       - device: "{{ nbde_client_test_device }}"
-        keyfile: "{{ nbde_client_test_keyfile }}"
+        key_file: "{{ nbde_client_test_key_file }}"
         passphrase_temporary: yes
         servers:
           - http://localhost
@@ -31,13 +31,13 @@
               - not nbde_client_unlock.failed
               - not nbde_client_close.failed
 
-        - name: Attempt to check whether default keyfile works
-          include: tasks/verify_default_keyfile.yml
+        - name: Attempt to check whether default key file works
+          include: tasks/verify_default_key_file.yml
 
-        - name: Make sure the default keyfile did not work
+        - name: Make sure the default key file did not work
           assert:
             that:
-              - nbde_client_keyfile is not success
+              - nbde_client_key_file is not success
 
       always:
         - name: Clean up test environment

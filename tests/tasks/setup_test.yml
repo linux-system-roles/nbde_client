@@ -42,9 +42,9 @@
     --batch-mode --force-password {{ nbde_client_test_device }}
 
 
-- name: Create keyfile for test device
+- name: Create key file for test device
   shell: >
-    echo -n {{ nbde_client_test_pass }} > {{ nbde_client_test_keyfile }}
+    echo -n {{ nbde_client_test_pass }} > {{ nbde_client_test_key_file }}
   delegate_to: localhost
 
 # vim:set ts=2 sw=2 et:

@@ -34,21 +34,21 @@ These are the variables that can be passed to the role:
 `nbde_client_bindings` is a list of dictionaries that support the following keys:
 | **Name** | **Default/Choices** | **Description** |
 |----------|-------------|------|
-| `device` | | specifies the path of the backing of an encrypted device in the managed host. This device must be already configured as a LUKS device before using the role (**REQUIRED**). |
+| `device` | | specifies the path of the backing device of an encrypted device on the managed host. This device must be already configured as a LUKS device before using the role (**REQUIRED**). |
 | `passphrase` | | a valid passphrase for opening/unlocking the specified device. |
-| `keyfile` | | either the absolute or relative path, in the control node, of a keyfile valid for opening/unlocking the specified device. |
+| `key_file` | | either the absolute or relative path, on the control node, of a key file valid for opening/unlocking the specified device. |
 | `state` | **present** / absent | specifies whether a binding with the configuration described should be added or removed. Setting state to present (the default) means a binding will be added; setting state to absent means a binding will be removed from the device/slot. |
 | `slot` | `1` | specifies the slot to use for the binding. |
 | `servers` | |  specifies a list of servers to bind to. To enable high availability, specify more than one server here. |
 | `threshold` | `1` | specifies the threshold for the Shamir Secret Sharing (SSS) scheme that is put in place when using more than one server. When using multiple servers, threshold indicates how many of those servers should succeed, in terms of decryption, in order to complete the process of recovering the LUKS passphrase to open the device. |
-| `passphrase_temporary` | `no` | If yes, the passphrase that was provided via the pass or keyfile arguments will be used to unlock the device and then it will be removed from the LUKS device after the binding operation completes, i.e. it will not be valid anymore. To be used if device has been previously created with a dummy passphrase (for example by an automated install like kickstart that set up some sort of "default" password), which the role should replace by a stronger one. |
+| `passphrase_temporary` | `no` | If yes, the passphrase that was provided via the `passphrase` or `key_file` arguments will be used to unlock the device and then it will be removed from the LUKS device after the binding operation completes, i.e. it will not be valid anymore. To be used if device has been previously created with a dummy passphrase (for example by an automated install like kickstart that set up some sort of "default" password), which the role should replace by a stronger one. |
 
 
 Example:
 ```yaml
 nbde_client_bindings:
   - device: /dev/sda1
-    keyfile: /vault/keyfile
+    key_file: /vault/keyfile
     state: present
     slot: 2
     threshold: 1
@@ -65,7 +65,6 @@ Example Playbooks
 ```yaml
 ---
 - hosts: all
-
   vars:
     nbde_client_bindings:
       - device: /dev/sda1
@@ -81,7 +80,6 @@ Example Playbooks
 ```yaml
 ---
 - hosts: all
-
   vars:
     nbde_client_bindings:
       - device: /dev/sda1

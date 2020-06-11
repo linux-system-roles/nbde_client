@@ -5,18 +5,18 @@
     state: present
 
 
-- name: Prepare keyfiles, perform clevis operations and dispose of keyfiles
+- name: Prepare key files, perform clevis operations and dispose of key files
   block:
-    - name: Ensure we transfer keyfiles
+    - name: Ensure we transfer key files
       copy:
-        src: "{{ item.keyfile }}"
+        src: "{{ item.key_file }}"
         dest: "{{ __nbde_client_managed_dir }}/"
         mode: '0400'
       when:
-        - item.keyfile | default("")
+        - item.key_file | default("")
       loop: "{{ nbde_client_bindings }}"
       loop_control:
-        label: "{{ item.keyfile | default('') }}"
+        label: "{{ item.key_file | default('') }}"
 
     - name: Perform clevis operations
       when: nbde_client_bindings | default([])
@@ -26,14 +26,14 @@
       notify: nbde_client update initramfs
 
   always:
-    - name: Ensure we dispose of any transferred keyfiles
+    - name: Ensure we dispose of any transferred key files
       file:
-        path: "{{ __nbde_client_managed_dir }}/{{ item.keyfile | basename }}"
+        path: "{{ __nbde_client_managed_dir }}/{{ item.key_file | basename }}"
         state: absent
       when:
-        - item.keyfile | default("")
+        - item.key_file | default("")
       loop: "{{ nbde_client_bindings }}"
       loop_control:
-        label: "{{ item.keyfile | default('') }}"
+        label: "{{ item.key_file | default('') }}"
 
 # vim:set ts=2 sw=2 et:

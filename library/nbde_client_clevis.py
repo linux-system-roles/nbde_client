@@ -45,8 +45,8 @@ options:
                 using the module (REQUIRED)
               - passphrase: a valid passphrase for opening/unlocking the
                 specified device
-              - keyfile: a keyfile valid for opening/unlocking the specified
-                device. When present, the keyfile should be located at
+              - key_file: a key file valid for opening/unlocking the specified
+                device. When present, the key file should be located at
                 data_dir
               - state: either present/absent, to indicate whether the binding
                 described should be added or removed
@@ -56,14 +56,14 @@ options:
                 (SSS) scheme that is put in place when using more than one
                 server
               - passphrase_temporary: if yes, the passphrase that was provided
-                via the pass or keyfile arguments will be used to unlock the
-                encryped device and then it will be removed from the LUKS
+                via the passphrase or key file arguments will be used to unlock
+                the encrypted device and then it will be removed from the LUKS
                 device after the binding operation completes, i.e., it will
                 not be valid anymore.
         required: true
     data_dir:
         description:
-            - a directory used to store temporary files like keyfiles
+            - a directory used to store temporary files like key files
         required: false
 author:
     - Sergio Correia (scorreia@redhat.com)
@@ -1139,7 +1139,7 @@ def bindings_sanity_check(bindings, data_dir):
     # {
     #   device: [REQUIRED]
     #   pass
-    #   keyfile
+    #   key_file
     #   slot: 1 (default)
     #   state: present (default) | absent
     #   passphrase_temporary: no (default)
@@ -1163,10 +1163,10 @@ def bindings_sanity_check(bindings, data_dir):
             errmsg = "Each binding must have a device set"
             return None, {"msg": errmsg}
 
-        if "keyfile" in binding:
-            basefile = os.path.basename(binding["keyfile"])
+        if "key_file" in binding:
+            basefile = os.path.basename(binding["key_file"])
             keyfile = os.path.join(data_dir, basefile)
-            bindings[idx]["keyfile"] = cmd_quote(keyfile)
+            bindings[idx]["key_file"] = cmd_quote(keyfile)
 
         # The defaults for the remaining binding attributes.
         binding_defaults = {
@@ -1210,8 +1210,8 @@ def process_bindings(module, bindings):
         else:
             passphrase = binding.get("passphrase", None)
             if not passphrase:
-                passphrase = binding.get("keyfile", None)
-            is_keyfile = "keyfile" in binding
+                passphrase = binding.get("key_file", None)
+            is_keyfile = "key_file" in binding
 
             _, err = bind_slot(
                 module,

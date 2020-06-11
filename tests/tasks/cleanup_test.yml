@@ -4,9 +4,9 @@
     path: "{{ nbde_client_test_device }}"
     state: absent
 
-- name: Clean up dummy keyfile
+- name: Clean up dummy key file
   file:
-    path: "{{ nbde_client_test_keyfile }}"
+    path: "{{ nbde_client_test_key_file }}"
     state: absent
   delegate_to: localhost
 

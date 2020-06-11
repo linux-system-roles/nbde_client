@@ -8,10 +8,10 @@ nbde_client_provider: clevis
 # * device             - specifies the path of an encrypted device in the
 #                        managed host. This device must be already configured
 #                        as a LUKS device before using the role (REQUIRED).
-# * pass               - specifies a valid passphrase for opening/unlocking
+# * passphrase         - specifies a valid passphrase for opening/unlocking
 #                        the specified device.
-# * keyfile            - specifies either the absolute or relative path, in
-#                        the control node, of a keyfile valid for
+# * key_file           - specifies either the absolute or relative path, in
+#                        the control node, of a key file valid for
 #                        opening/unlocking the specified device.
 #  * state             - specifies whether a binding with the configuration
 #                        described should be added or removed. Setting state
@@ -31,9 +31,9 @@ nbde_client_provider: clevis
 #                        the process of recovering the LUKS passphrase to open
 #                        the device.
 # * passphrase_temporary - If yes, the passphrase that was provided via the
-#                          pass or keyfile arguments will be used to unlock
-#                          the LUKS device and then it will be removed from
-#                          the LUKS device after the binding operation
+#                          passphrase or key_file arguments will be used to
+#                          unlock the LUKS device and then it will be removed
+#                          from the LUKS device after the binding operation
 #                          completes, i.e. it will not be valid anymore. To
 #                          be used if device has been previously created with
 #                          a dummy passphrase (for example by an automated
@@ -44,7 +44,7 @@ nbde_client_provider: clevis
 # Example:
 # nbde_client_bindings:
 #    - device: /dev/sda1
-#      keyfile: /vault/keyfile
+#      key_file: /vault/keyfile
 #      state: present
 #      slot: 2
 #      threshold: 1
