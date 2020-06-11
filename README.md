@@ -35,7 +35,7 @@ These are the variables that can be passed to the role:
 | **Name** | **Default/Choices** | **Description** |
 |----------|-------------|------|
 | `device` | | specifies the path of the backing device of an encrypted device on the managed host. This device must be already configured as a LUKS device before using the role (**REQUIRED**). |
-| `passphrase` | | a valid passphrase for opening/unlocking the specified device. |
+| `passphrase` | | a valid passphrase for opening/unlocking the specified device. Recommend vault encrypting the passphrase. See https://docs.ansible.com/ansible/latest/user_guide/vault.html |
 | `key_file` | | either the absolute or relative path, on the control node, of a key file valid for opening/unlocking the specified device. |
 | `state` | **present** / absent | specifies whether a binding with the configuration described should be added or removed. Setting state to present (the default) means a binding will be added; setting state to absent means a binding will be removed from the device/slot. |
 | `slot` | `1` | specifies the slot to use for the binding. |
@@ -68,6 +68,8 @@ Example Playbooks
   vars:
     nbde_client_bindings:
       - device: /dev/sda1
+        # recommend vault encrypting the passphrase
+        # see https://docs.ansible.com/ansible/latest/user_guide/vault.html
         passphrase: password
         servers:
           - http://server1.example.com
@@ -83,6 +85,8 @@ Example Playbooks
   vars:
     nbde_client_bindings:
       - device: /dev/sda1
+        # recommend vault encrypting the passphrase
+        # see https://docs.ansible.com/ansible/latest/user_guide/vault.html
         passphrase: password
         slot: 2
         state: absent

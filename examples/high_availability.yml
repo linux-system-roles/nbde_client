@@ -4,6 +4,8 @@
   vars:
     nbde_client_bindings:
       - device: /dev/sda1
+        # recommend vault encrypting the passphrase
+        # see https://docs.ansible.com/ansible/latest/user_guide/vault.html
         passphrase: password
         servers:
           - http://server1.example.com
