@@ -4,7 +4,7 @@
   vars:
     nbde_client_bindings:
       - device: /dev/sda1
-        pass: password
+        passphrase: password
         slot: 2
         state: absent
 

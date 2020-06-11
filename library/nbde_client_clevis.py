@@ -43,8 +43,8 @@ options:
               - device: the path of the underlying encrypted device. This
                 device must be already configured as a LUKS device before
                 using the module (REQUIRED)
-              - pass: a valid passphrase for opening/unlocking the specified
-                device
+              - passphrase: a valid passphrase for opening/unlocking the
+                specified device
               - keyfile: a keyfile valid for opening/unlocking the specified
                 device. When present, the keyfile should be located at
                 data_dir
@@ -75,7 +75,7 @@ EXAMPLES = """
 - name: Set up a clevis binding in /dev/sda1
   nbde_client_bindings:
     - device: /dev/sda1
-      pass: password
+      passphrase: password
       servers:
         - http://server1.example.com
         - http://server2.example.com
@@ -84,7 +84,7 @@ EXAMPLES = """
 - name: Remove binding from slot 2 in /dev/sda1
   nbde_client_bindings:
       - device: /dev/sda1
-        pass: password
+        passphrase: password
         slot: 2
         state: absent
 """
@@ -1208,7 +1208,7 @@ def process_bindings(module, bindings):
                 continue
             _, err = unbind_slot(module, binding["device"], binding["slot"])
         else:
-            passphrase = binding.get("pass", None)
+            passphrase = binding.get("passphrase", None)
             if not passphrase:
                 passphrase = binding.get("keyfile", None)
             is_keyfile = "keyfile" in binding

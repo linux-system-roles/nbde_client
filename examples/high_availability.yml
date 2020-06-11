@@ -4,7 +4,7 @@
   vars:
     nbde_client_bindings:
       - device: /dev/sda1
-        pass: password
+        passphrase: password
         servers:
           - http://server1.example.com
           - http://server2.example.com
