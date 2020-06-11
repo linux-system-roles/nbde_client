@@ -11,6 +11,8 @@
       tempfile:
         state: directory
         suffix: nbde_client_key_files
+      when:
+        - nbde_client_bindings | default([])
       register: nbde_client_tempdir
 
     - name: Ensure we transfer key files
@@ -40,6 +42,7 @@
         path: "{{ nbde_client_tempdir.path }}"
         state: absent
       when:
+        - nbde_client_bindings | default([])
         - nbde_client_tempdir.path is defined
 
 # vim:set ts=2 sw=2 et:
