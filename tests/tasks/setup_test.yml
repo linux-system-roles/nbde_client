@@ -2,7 +2,6 @@
 - name: Include general tests variables
   include_vars: main.yml
 
-
 - name: Set version specific variables
   include_vars: "{{ item }}"
   with_first_found:
@@ -12,11 +11,9 @@
     - "{{ ansible_os_family }}.yml"
     - "default.yml"
 
-
 - name: Install required packages for nbde_client tests
   package:
     name: "{{ nbde_client_test_packages }}"
-
 
 - name: Clone nbde_server role for the tests
   git:
@@ -25,22 +22,18 @@
   delegate_to: localhost
   become: false
 
-
 - name: Deploy NBDE server for testing
   include_role:
     name: "{{ nbde_client_test_roles_dir }}/linux-system-roles.nbde_server"
 
-
 - name: Create device for testing
   command: fallocate -l64m {{ nbde_client_test_device }}
-
 
 - name: Format test device as LUKS
   shell: >
     echo -n {{ nbde_client_test_pass }} |
     cryptsetup luksFormat --pbkdf pbkdf2 --pbkdf-force-iterations 1000
     --batch-mode --force-password {{ nbde_client_test_device }}
-
 
 - name: Create key file for test device
   shell: >
