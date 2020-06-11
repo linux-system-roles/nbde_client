@@ -32,14 +32,39 @@ module: nbde_client_clevis
 short_description: Handle clevis-related operations on LUKS devices
 version_added: "2.9"
 description:
-    - "Module manages clevis bindings on LUKS devices to match the state
+    - "Module manages clevis bindings on encryped devices to match the state
        specified in input parameters.
 options:
-    devices:
+    nbde_client_bindings:
         description:
-            - list of dicts containing a set of LUKS devices and a specific
-              binding configuration to be applied to this set of devices.
+            - a list of dictionaries that describe a binding that should be
+              either added or removed from a given device/slot. It supports
+              the following keys:
+              - device: the path of the underlying encrypted device. This
+                device must be already configured as a LUKS device before
+                using the module (REQUIRED)
+              - pass: a valid passphrase for opening/unlocking the specified
+                device
+              - keyfile: a keyfile valid for opening/unlocking the specified
+                device. When present, the keyfile should be located at
+                data_dir
+              - state: either present/absent, to indicate whether the binding
+                described should be added or removed
+              - slot: the slot to use for the binding
+              - servers: the list of servers to bind to
+              - threshold: the threshold for the the Shamir Secret Sharing
+                (SSS) scheme that is put in place when using more than one
+                server
+              - discard_passphrase: if yes, the passphrase that was provided
+                via the pass or keyfile arguments will be used to unlock the
+                encryped device and then it will be removed from the LUKS
+                device after the binding operation completes, i.e., it will
+                not be valid anymore.
         required: true
+    data_dir:
+        description:
+            - a directory used to store temporary files like keyfiles
+        required: false
 author:
     - Sergio Correia (scorreia@redhat.com)
 """
@@ -49,23 +74,19 @@ EXAMPLES = """
 ---
 - name: Set up a clevis binding in /dev/sda1
   nbde_client_bindings:
-    - devices:
-        - path: /dev/sda1
-          pass: password
-      auth:
-        servers:
-          - http://tang.server-01
-          - http://tang.server-02
+    - device: /dev/sda1
+      pass: password
+      servers:
+        - http://server1.example.com
+        - http://server2.example.com
 
 
 - name: Remove binding from slot 2 in /dev/sda1
   nbde_client_bindings:
-    - devices:
-        - path: /dev/sda1
-          pass: password
-      state: absent
-      auth:
+      - device: /dev/sda1
+        pass: password
         slot: 2
+        state: absent
 """
 
 RETURN = """

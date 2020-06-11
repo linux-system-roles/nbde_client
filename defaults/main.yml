@@ -5,11 +5,14 @@ nbde_client_provider: clevis
 
 # nbde_client_bindings is a list, and its elements support the following keys:
 #
-# * device             - specifies the path of a LUKS device. (REQUIRED)
-# * pass               - specifies a valid passphrase for this device.
-# * keyfile            - specifies either the absolute or relative path of a
-#                        valid keyfile for the device pointed out by device.
-#
+# * device             - specifies the path of an encrypted device in the
+#                        managed host. This device must be already configured
+#                        as a LUKS device before using the role (REQUIRED).
+# * pass               - specifies a valid passphrase for opening/unlocking
+#                        the specified device.
+# * keyfile            - specifies either the absolute or relative path, in
+#                        the control node, of a keyfile valid for
+#                        opening/unlocking the specified device.
 #  * state             - specifies whether a binding with the configuration
 #                        described should be added or removed. Setting state
 #                        to present (the default) means a binding will be

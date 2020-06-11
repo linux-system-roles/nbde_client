@@ -31,10 +31,12 @@ These are the variables that can be passed to the role:
 
 
 #### nbde_client_bindings
-`nbde_client_bindings` supports the following keys:
+`nbde_client_bindings` is a list of dictionaries that support the following keys:
 | **Name** | **Default/Choices** | **Description** |
 |----------|-------------|------|
-| `device` | | specifies the path of a LUKS device (**REQUIRED**). |
+| `device` | | specifies the path of the backing of an encrypted device in the managed host. This device must be already configured as a LUKS device before using the role (**REQUIRED**). |
+| `pass` | | a valid passphrase for opening/unlocking the specified device. |
+| `keyfile` | | either the absolute or relative path, in the control node, of a keyfile valid for opening/unlocking the specified device. |
 | `state` | **present** / absent | specifies whether a binding with the configuration described should be added or removed. Setting state to present (the default) means a binding will be added; setting state to absent means a binding will be removed from the device/slot. |
 | `slot` | `1` | specifies the slot to use for the binding. |
 | `servers` | |  specifies a list of servers to bind to. To enable high availability, specify more than one server here. |
@@ -82,7 +84,7 @@ Example Playbooks
 
   vars:
     nbde_client_bindings:
-      - device: /tmp/sda1
+      - device: /dev/sda1
         pass: password
         slot: 2
         state: absent
