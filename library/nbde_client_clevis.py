@@ -55,7 +55,7 @@ options:
               - threshold: the threshold for the the Shamir Secret Sharing
                 (SSS) scheme that is put in place when using more than one
                 server
-              - discard_passphrase: if yes, the passphrase that was provided
+              - passphrase_temporary: if yes, the passphrase that was provided
                 via the pass or keyfile arguments will be used to unlock the
                 encryped device and then it will be removed from the LUKS
                 device after the binding operation completes, i.e., it will
@@ -1061,7 +1061,7 @@ def bind_slot(module, **kwargs):
             return False, {"msg": "{} is a required parameter".format(req)}
 
     overwrite = kwargs.get("overwrite", True)
-    discard_pw = kwargs.get("discard_passphrase", False)
+    discard_pw = kwargs.get("passphrase_temporary", False)
 
     _, err = can_bind_slot(module, kwargs["device"], kwargs["slot"], overwrite)
     if err:
@@ -1142,7 +1142,7 @@ def bindings_sanity_check(bindings, data_dir):
     #   keyfile
     #   slot: 1 (default)
     #   state: present (default) | absent
-    #   discard_passphrase: no (default)
+    #   passphrase_temporary: no (default)
     #   threshold: 1 (default)
     #   servers: [] (default)
     # }
@@ -1172,7 +1172,7 @@ def bindings_sanity_check(bindings, data_dir):
         binding_defaults = {
             "slot": 1,
             "threshold": 1,
-            "discard_passphrase": False,
+            "passphrase_temporary": False,
             "servers": [],
         }
 
@@ -1222,7 +1222,7 @@ def process_bindings(module, bindings):
                 passphrase=passphrase,
                 is_keyfile=is_keyfile,
                 overwrite=True,
-                discard_passphrase=binding["discard_passphrase"],
+                passphrase_temporary=binding["passphrase_temporary"],
             )
 
         if err:

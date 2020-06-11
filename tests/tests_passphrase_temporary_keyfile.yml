@@ -5,7 +5,7 @@
     nbde_client_bindings:
       - device: "{{ nbde_client_test_device }}"
         keyfile: "{{ nbde_client_test_keyfile }}"
-        discard_passphrase: yes
+        passphrase_temporary: yes
         servers:
           - http://localhost
       - device: "{{ nbde_client_test_device }}"

@@ -30,9 +30,16 @@ nbde_client_provider: clevis
 #                        succeed, in terms of decryption, in order to complete
 #                        the process of recovering the LUKS passphrase to open
 #                        the device.
-# * discard_passphrase - specifies whether we should discard the passphrase
-#                        provided -- via either pass or keyfile, in devices
-#                        -- after completing the binding operation.
+# * passphrase_temporary - If yes, the passphrase that was provided via the
+#                          pass or keyfile arguments will be used to unlock
+#                          the LUKS device and then it will be removed from
+#                          the LUKS device after the binding operation
+#                          completes, i.e. it will not be valid anymore. To
+#                          be used if device has been previously created with
+#                          a dummy passphrase (for example by an automated
+#                          install like kickstart that set up some sort of
+#                          "default" password), which the role should
+#                          replace by a stronger one.
 
 # Example:
 # nbde_client_bindings:
@@ -41,7 +48,7 @@ nbde_client_provider: clevis
 #      state: present
 #      slot: 2
 #      threshold: 1
-#      discard_passphrase: no
+#      passphrase_temporary: no
 #      servers:
 #        - http://server1.example.com
 #        - http://server2.example.com

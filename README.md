@@ -41,7 +41,7 @@ These are the variables that can be passed to the role:
 | `slot` | `1` | specifies the slot to use for the binding. |
 | `servers` | |  specifies a list of servers to bind to. To enable high availability, specify more than one server here. |
 | `threshold` | `1` | specifies the threshold for the Shamir Secret Sharing (SSS) scheme that is put in place when using more than one server. When using multiple servers, threshold indicates how many of those servers should succeed, in terms of decryption, in order to complete the process of recovering the LUKS passphrase to open the device. |
-| `discard_passphrase` | `no` | specifies whether we should discard the passphrase provided -- via either pass or keyfile, in devices from the LUKS device, after completing the binding operation. |
+| `passphrase_temporary` | `no` | If yes, the passphrase that was provided via the pass or keyfile arguments will be used to unlock the device and then it will be removed from the LUKS device after the binding operation completes, i.e. it will not be valid anymore. To be used if device has been previously created with a dummy passphrase (for example by an automated install like kickstart that set up some sort of "default" password), which the role should replace by a stronger one. |
 
 
 Example:
@@ -52,7 +52,7 @@ nbde_client_bindings:
     state: present
     slot: 2
     threshold: 1
-    discard_passphrase: no
+    passphrase_etmporary: no
     servers:
       - http://server1.example.com
       - http://server2.example.com
