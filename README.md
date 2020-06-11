@@ -52,7 +52,7 @@ nbde_client_bindings:
     state: present
     slot: 2
     threshold: 1
-    passphrase_etmporary: no
+    passphrase_temporary: no
     servers:
       - http://server1.example.com
       - http://server2.example.com
