@@ -5,7 +5,4 @@
 # Mostly useful when debugging/testing.
 __nbde_client_update_initramfs: yes
 
-# __nbde_client_managed_dir is used to store temporary data by the system role,
-# in the managed host, eg. transferred keyfiles.
-__nbde_client_managed_dir: /var/run/linux-system-roles.nbde_client
 # vim:set ts=2 sw=2 et:
