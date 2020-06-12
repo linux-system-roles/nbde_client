@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: MIT
+---
+# The provider for nbde_client role. Currently 'clevis' is supported.
+nbde_client_provider: clevis
+
+# nbde_client_bindings is a list of dictionary. Please refer to the README
+# for details on the supported keys.
+
+# Example:
+# nbde_client_bindings:
+#    - device: /dev/sda1
+#      key_file: /vault/keyfile
+#      state: present
+#      slot: 2
+#      threshold: 1
+#      passphrase_temporary: no
+#      servers:
+#        - http://server1.example.com
+#        - http://server2.example.com
+nbde_client_bindings: []
+
+# vim:set ts=2 sw=2 et:

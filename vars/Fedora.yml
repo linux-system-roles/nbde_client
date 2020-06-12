@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MIT
+---
+# Put internal variables here with Fedora specific values.
+
+__nbde_client_packages:
+  - clevis
+  - clevis-dracut
+  - clevis-luks
+  - clevis-systemd
+
+__nbde_client_initramfs_update_cmd: dracut -f
+
+# vim:set ts=2 sw=2 et:

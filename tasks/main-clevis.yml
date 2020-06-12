@@ -1,0 +1,47 @@
+---
+- name: Ensure required packages are installed
+  package:
+    name: "{{ __nbde_client_packages }}"
+    state: present
+
+- name: Prepare key files, perform clevis operations and dispose of key files
+  block:
+    - name: Create temporary directory to hold key files
+      tempfile:
+        state: directory
+        suffix: nbde_client_key_files
+      when:
+        - nbde_client_bindings | default([])
+      register: nbde_client_tempdir
+
+    - name: Ensure we transfer key files
+      copy:
+        src: "{{ item.key_file }}"
+        dest: "{{ nbde_client_tempdir.path }}/"
+        mode: '0400'
+      when:
+        - nbde_client_tempdir.path is defined
+        - item.key_file | default("")
+      loop: "{{ nbde_client_bindings }}"
+      loop_control:
+        label: "{{ item.key_file | default('') }}"
+
+    - name: Perform clevis operations
+      when:
+        - nbde_client_bindings | default([])
+        - nbde_client_tempdir.path is defined
+      nbde_client_clevis:
+        bindings: "{{ nbde_client_bindings | default([]) }}"
+        data_dir: "{{ nbde_client_tempdir.path }}"
+      notify: nbde_client update initramfs
+
+  always:
+    - name: Remove temporary directory used to hold key files
+      file:
+        path: "{{ nbde_client_tempdir.path }}"
+        state: absent
+      when:
+        - nbde_client_bindings | default([])
+        - nbde_client_tempdir.path is defined
+
+# vim:set ts=2 sw=2 et:

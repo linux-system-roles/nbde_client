@@ -1,0 +1,13 @@
+---
+- name: Clean up dummy testing device
+  file:
+    path: "{{ nbde_client_test_device }}"
+    state: absent
+
+- name: Clean up dummy key file
+  file:
+    path: "{{ nbde_client_test_key_file }}"
+    state: absent
+  delegate_to: localhost
+
+# vim:set ts=2 sw=2 et:
