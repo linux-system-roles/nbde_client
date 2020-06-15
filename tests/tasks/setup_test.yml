@@ -20,7 +20,6 @@
     repo: https://github.com/linux-system-roles/nbde_server
     dest: "{{ nbde_client_test_roles_dir }}/linux-system-roles.nbde_server"
   delegate_to: localhost
-  become: false
 
 - name: Deploy NBDE server for testing
   include_role:
