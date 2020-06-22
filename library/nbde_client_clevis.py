@@ -434,7 +434,7 @@ def valid_passphrase(module, **kwargs):
     Return: <boolean> <error> """
 
     for req in ["device", "passphrase"]:
-        if req not in kwargs:
+        if req not in kwargs or kwargs[req] is None:
             errmsg = "valid_passphrase: {} is a required parameter".format(req)
             return False, {"msg": errmsg}
 
@@ -1052,6 +1052,34 @@ def restore_failed_rebind(module, device, backup):
     return import_luks2_token(module, device, backup)
 
 
+def get_valid_passphrase(module, **kwargs):
+    """ Gets valid passphrase from input parameters. It first tries to validate
+    the passed passphrase, if any, and then tries to retrieve a passphrase from
+    existing bindings, otherwise.
+    Return <passphrase> <is_keyfile> (boolean) <error> """
+
+    passphrase = kwargs.get("passphrase", None)
+    is_keyfile = kwargs.get("is_keyfile", False)
+
+    # Now let's check if we have a valid passphrase.
+    _, err = valid_passphrase(
+        module, device=kwargs["device"], passphrase=passphrase, is_keyfile=is_keyfile,
+    )
+
+    # We have a valid passphrase, so that's fine.
+    if not err:
+        return passphrase, is_keyfile, None
+
+    # We either were not provided a passphrase, or it didn't prove to be valid.
+    # Let's try to retrieve one from existing bindings, if possible.
+    _, passphrase, err = retrieve_passphrase(module, kwargs["device"])
+    if err:
+        return None, False, err
+    # We retrieved a passphrase from an existing binding, so let's use it.
+    is_keyfile = False
+    return passphrase, is_keyfile, None
+
+
 def bind_slot(module, **kwargs):
     """ Create a clevis binding in a given LUKS device.
     Return <result> <error> """
@@ -1061,27 +1089,22 @@ def bind_slot(module, **kwargs):
             return False, {"msg": "{} is a required parameter".format(req)}
 
     overwrite = kwargs.get("overwrite", True)
-    discard_pw = kwargs.get("passphrase_temporary", False)
 
     _, err = can_bind_slot(module, kwargs["device"], kwargs["slot"], overwrite)
     if err:
         return False, err
 
-    if "passphrase" not in kwargs or kwargs["passphrase"] is None:
+    passphrase, is_keyfile, err = get_valid_passphrase(module, **kwargs)
+    if err:
+        return False, err
 
-        if discard_pw:
-            errmsg = "You cannot discard a passphrase you did not provide"
-            return False, {"msg": errmsg}
-
-        _, passphrase, err = retrieve_passphrase(module, kwargs["device"])
-        if err:
-            return False, err
-        # We retrieved a passphrase from an existing binding, so let's use it.
-        is_keyfile = False
-
-    else:
-        passphrase = kwargs["passphrase"]
-        is_keyfile = kwargs.get("is_keyfile", False)
+    discard_pw = kwargs.get("passphrase_temporary", False)
+    if discard_pw:
+        # Since we have passphrase_temporary set, let's make sure the valid
+        # passphrase we have is the one that was given as a parameter. If that
+        # is not the case, we cannot consider passphrase to be temporary, which
+        # means discard_pw should be false.
+        discard_pw = passphrase == kwargs.get("passphrase", None)
 
     # At this point we can proceed to bind.
     key, jwe, err = new_pass_jwe(
