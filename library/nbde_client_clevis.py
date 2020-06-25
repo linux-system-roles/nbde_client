@@ -1379,7 +1379,7 @@ def already_bound(module, **kwargs):
     return True
 
 
-def bindings_sanity_check(bindings, data_dir):
+def bindings_sanity_check(bindings, data_dir, check_mode):
     """ Performs sanity-checking on the bindings list and related arguments.
     Return: <bindings> <error> """
 
@@ -1411,7 +1411,12 @@ def bindings_sanity_check(bindings, data_dir):
             errmsg = "Each binding must have a device set"
             return None, {"msg": errmsg}
 
-        if "key_file" in binding:
+        # When running under check mode, key_file is not used, which means we
+        # also do not need to have data_dir defined.
+        if "key_file" in binding and not check_mode:
+            if not data_dir:
+                return None, {"msg": "data_dir needs to be defined"}
+
             basefile = os.path.basename(binding["key_file"])
             keyfile = os.path.join(data_dir, basefile)
             bindings[idx]["key_file"] = cmd_quote(keyfile)
@@ -1431,32 +1436,64 @@ def bindings_sanity_check(bindings, data_dir):
     return bindings, None
 
 
+def process_bind_operation(module, binding):
+    """ Process an operation to add a binding to an encrypted device.
+    Return: <changed (boolean)> <err> """
+
+    auth_name, cfg, cfg_keys, err = generate_config(
+        module, binding["servers"], binding["threshold"]
+    )
+    if err:
+        raise NbdeClientClevisError(dict(msg=err))
+
+    passphrase = binding.get("passphrase", None)
+    if not passphrase:
+        passphrase = binding.get("key_file", None)
+    is_keyfile = "key_file" in binding
+
+    args = dict(
+        device=binding["device"],
+        slot=binding["slot"],
+        auth=auth_name,
+        auth_cfg=cfg,
+        passphrase=passphrase,
+        is_keyfile=is_keyfile,
+        overwrite=True,
+        keys=cfg_keys,
+        passphrase_temporary=binding["passphrase_temporary"],
+    )
+
+    if already_bound(module, **args):
+        return False, None
+
+    if module.check_mode:
+        return True, None
+
+    _, err = bind_slot(module, **args)
+    if err:
+        return False, err
+
+    return True, None
+
+
 def process_bindings(module, bindings):
     """ Process the list of bindings and performs the appropriate operations.
     Return: <result> """
 
     original_bindings = bindings
     result = {"changed": False, "original_bindings": bindings}
-    if module.check_mode:
-        return result
 
-    keys = {}
     for binding in bindings:
-        if binding["state"] != "absent":
-            auth_name, cfg, cfg_keys, err = generate_config(
-                module, binding["servers"], binding["threshold"]
-            )
-            if err:
-                raise NbdeClientClevisError(dict(msg=err))
-            for key in cfg_keys:
-                keys[key] = key
-
-        slot = binding["slot"]
         if binding["state"] == "absent":
-            _, err = is_slot_bound(module, binding["device"], slot)
+            _, err = is_slot_bound(module, binding["device"], binding["slot"])
             if err:
                 # Slot not bound, moving on.
                 continue
+
+            if module.check_mode:
+                result["changed"] = True
+                return result
+
             _, err = unbind_slot(module, binding["device"], binding["slot"])
             if err:
                 err["original_bindings"] = original_bindings
@@ -1464,32 +1501,16 @@ def process_bindings(module, bindings):
 
             result["changed"] = True
         else:
-            passphrase = binding.get("passphrase", None)
-            if not passphrase:
-                passphrase = binding.get("key_file", None)
-            is_keyfile = "key_file" in binding
-
-            args = dict(
-                device=binding["device"],
-                slot=binding["slot"],
-                auth=auth_name,
-                auth_cfg=cfg,
-                passphrase=passphrase,
-                is_keyfile=is_keyfile,
-                overwrite=True,
-                keys=keys,
-                passphrase_temporary=binding["passphrase_temporary"],
-            )
-
-            if already_bound(module, **args):
-                continue
-
-            _, err = bind_slot(module, **args)
+            changed, err = process_bind_operation(module, binding)
             if err:
                 err["original_bindings"] = original_bindings
                 raise NbdeClientClevisError(err)
 
-            result["changed"] = True
+            if changed:
+                result["changed"] = True
+                if module.check_mode:
+                    return result
+
     return result
 
 
@@ -1504,7 +1525,9 @@ def run_module():
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
     params = module.params
 
-    bindings, err = bindings_sanity_check(params["bindings"], params["data_dir"])
+    bindings, err = bindings_sanity_check(
+        params["bindings"], params["data_dir"], module.check_mode
+    )
 
     if err:
         err["changed"] = False
