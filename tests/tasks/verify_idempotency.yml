@@ -1,0 +1,11 @@
+---
+- name: Use nbde_client role - idempotency check
+  include_role:
+    name: linux-system-roles.nbde_client
+
+- name: Verify idempotency of clevis operations
+  assert:
+    that:
+      - __nbde_client_clevis_check_state is not changed
+
+# vim:set ts=2 sw=2 et:

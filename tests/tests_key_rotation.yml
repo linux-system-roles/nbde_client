@@ -4,7 +4,7 @@
   vars:
     nbde_client_bindings:
       - device: "{{ nbde_client_test_device }}"
-        key_file: "{{ nbde_client_test_key_file }}"
+        passphrase: "{{ nbde_client_test_pass }}"
         servers:
           - http://localhost
 
@@ -28,6 +28,21 @@
               - not nbde_client_close.failed
 
         - name: Assert idempotency
+          include: tasks/verify_idempotency.yml
+
+        - name: Rotate keys
+          include: tasks/rotate_keys.yml
+
+        - name: Use nbde_client role - idempotency check - change expected
+          include_role:
+            name: linux-system-roles.nbde_client
+
+        - name: Assert change happened after key rotation
+          assert:
+            that:
+              - __nbde_client_clevis_check_state is changed
+
+        - name: Assert idempotency again - change not expected
           include: tasks/verify_idempotency.yml
 
       always:

@@ -4,6 +4,14 @@
     name: "{{ __nbde_client_packages }}"
     state: present
 
+- name: Check whether devices are at the desired state
+  when:
+    - nbde_client_bindings | default([])
+  nbde_client_clevis:
+    bindings: "{{ nbde_client_bindings | default([]) }}"
+  check_mode: yes
+  register: __nbde_client_clevis_check_state
+
 - name: Prepare key files, perform clevis operations and dispose of key files
   block:
     - name: Create temporary directory to hold key files
@@ -43,5 +51,9 @@
       when:
         - nbde_client_bindings | default([])
         - nbde_client_tempdir.path is defined
+
+  when:
+    - __nbde_client_clevis_check_state is defined
+    - __nbde_client_clevis_check_state is changed
 
 # vim:set ts=2 sw=2 et:
