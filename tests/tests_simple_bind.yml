@@ -27,6 +27,9 @@
               - not nbde_client_unlock.failed
               - not nbde_client_close.failed
 
+        - name: Assert idempotency
+          include: tasks/verify_idempotency.yml
+
       always:
         - name: Clean up test environment
           include: tasks/cleanup_test.yml

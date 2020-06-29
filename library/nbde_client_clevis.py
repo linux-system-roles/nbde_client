@@ -127,7 +127,7 @@ def initialize_device(module, luks_type, device):
     return None
 
 
-def get_luks_type(module, device):
+def get_luks_type(module, device, initialize=True):
     """ Get the LUKS type of the device.
     Return: <luks type> <error> """
 
@@ -136,12 +136,14 @@ def get_luks_type(module, device):
     if ret_code != 0:
         return None, {"msg": stderr}
 
-    # Now let's identify the LUKS type.t
+    # Now let's identify the LUKS type.
     for luks in ["luks1", "luks2"]:
         args = ["cryptsetup", "isLuks", "--type", luks, device]
         ret_code, _, _ = module.run_command(args)
         if ret_code == 0:
-            err = initialize_device(module, luks, device)
+            err = None
+            if initialize:
+                err = initialize_device(module, luks, device)
             return luks, err
 
     # We did not identify device as either LUKS1 or LUKS2.
@@ -224,11 +226,11 @@ def get_jwe_luks2(module, device, slot):
     return jwe, token_id, None
 
 
-def get_jwe(module, device, slot):
+def get_jwe(module, device, slot, initialize=True):
     """ Get a clevis JWE from a given device and slot.
     Return: <jwe> <error> """
 
-    luks, err = get_luks_type(module, device)
+    luks, err = get_luks_type(module, device, initialize)
     if err:
         return None, err
 
@@ -272,30 +274,83 @@ def download_adv(module, server):
     return adv_json, None
 
 
+def get_thumbprint(module, key):
+    """ Gets the tumbprint of the key passed as argument.
+    Return <thumbprint> <error> """
+
+    args = ["jose", "jwk", "thp", "--input=-"]
+    ret, thp, _ = module.run_command(args, data=key, binary_data=True)
+    if ret != 0:
+        return None, {"msg": "Error getting thumbprint of {}".format(key)}
+    return thp, None
+
+
+def keys_from_adv(module, adv):
+    """ Gets the keys from a tang advertisement.
+    Return <keys> """
+
+    keys = {}
+    # Get keys from advertisement.
+    adv_str = json.dumps(adv)
+
+    args = [
+        "jose",
+        "fmt",
+        "--json=-",
+        "--object",
+        "--get",
+        "payload",
+        "--string",
+        "--b64load",
+        "--object",
+        "--get",
+        "keys",
+        "--output=-",
+    ]
+    ret, adv_keys_str, _ = module.run_command(args, data=adv_str, binary_data=True)
+    if ret != 0:
+        return keys
+
+    adv_keys = json.loads(adv_keys_str)
+    for key in adv_keys:
+        key_str = json.dumps(key)
+        thp, err = get_thumbprint(module, key_str)
+        if err:
+            continue
+        keys[thp] = thp
+
+    return keys
+
+
 def generate_config(module, servers, threshold):
     """ Creates the config to be used when binding a group of devices.
-    Return: <pin> <config> <error> """
+    Return: <pin> <config> <keys> <error> """
 
     # No servers, so there is nothing to do here.
     if not servers or len(servers) == 0:
-        return None, None, None
+        return None, None, {}, None
 
+    keys = {}
     nbde_servers = []
     for server in servers:
         adv, err = download_adv(module, server)
         if err:
-            return None, None, err
+            return None, None, {}, err
         json_cfg = {"url": server, "adv": adv}
         nbde_servers.append(json_cfg)
+        # Get keys from advertisement.
+        adv_keys = keys_from_adv(module, adv)
+        for key in adv_keys:
+            keys[key] = key
 
     # Multiple servers -> sss pin.
     if len(servers) > 1:
         cfg = {"t": threshold, "pins": {"tang": nbde_servers}}
-        return "sss", json.dumps(cfg), None
+        return "sss", json.dumps(cfg), keys, None
 
     # Single server -> tang pin.
     cfg = nbde_servers[0]
-    return "tang", json.dumps(cfg), None
+    return "tang", json.dumps(cfg), keys, None
 
 
 def parse_keyslots_luks1(luks_dump):
@@ -434,7 +489,7 @@ def valid_passphrase(module, **kwargs):
     Return: <boolean> <error> """
 
     for req in ["device", "passphrase"]:
-        if req not in kwargs:
+        if req not in kwargs or kwargs[req] is None:
             errmsg = "valid_passphrase: {} is a required parameter".format(req)
             return False, {"msg": errmsg}
 
@@ -646,7 +701,7 @@ def format_jwe(module, data, is_compact):
     ret, jwe, err = module.run_command(args, data=data, binary_data=True)
     if ret != 0:
         return None, {"msg": err}
-    return jwe, None
+    return jwe.rstrip(), None
 
 
 def save_slot_luks2(module, **kwargs):
@@ -1052,6 +1107,42 @@ def restore_failed_rebind(module, device, backup):
     return import_luks2_token(module, device, backup)
 
 
+def get_valid_passphrase(module, **kwargs):
+    """ Gets valid passphrase from input parameters. It first tries to validate
+    the passed passphrase, if any, and then tries to retrieve a passphrase from
+    existing bindings, otherwise.
+    Return <passphrase> <is_keyfile> (boolean) <error> """
+
+    passphrase = kwargs.get("passphrase", None)
+    is_keyfile = kwargs.get("is_keyfile", False)
+
+    # Now let's check if we have a valid passphrase.
+    _, err = valid_passphrase(
+        module, device=kwargs["device"], passphrase=passphrase, is_keyfile=is_keyfile,
+    )
+
+    # We have a valid passphrase, so that's fine.
+    if not err:
+        return passphrase, is_keyfile, None
+
+    # If we provided a passphrase -- which has shown to to be invalid -- and
+    # passphrase_temporary is not set, error out.
+    passphrase_temporary = kwargs.get("passphrase_temporary", False)
+    if not passphrase_temporary and passphrase is not None:
+        return None, False, {"msg": "Invalid passphrase for device"}
+
+    # We either were not provided a passphrase, or it didn't prove to be valid,
+    # but passphrase_temporary was set.
+    # Let's try to retrieve one from existing bindings, if possible.
+    _, passphrase, err = retrieve_passphrase(module, kwargs["device"])
+    if err:
+        return None, False, err
+
+    # We retrieved a passphrase from an existing binding, so let's use it.
+    is_keyfile = False
+    return passphrase, is_keyfile, None
+
+
 def bind_slot(module, **kwargs):
     """ Create a clevis binding in a given LUKS device.
     Return <result> <error> """
@@ -1061,27 +1152,22 @@ def bind_slot(module, **kwargs):
             return False, {"msg": "{} is a required parameter".format(req)}
 
     overwrite = kwargs.get("overwrite", True)
-    discard_pw = kwargs.get("passphrase_temporary", False)
 
     _, err = can_bind_slot(module, kwargs["device"], kwargs["slot"], overwrite)
     if err:
         return False, err
 
-    if "passphrase" not in kwargs or kwargs["passphrase"] is None:
+    passphrase, is_keyfile, err = get_valid_passphrase(module, **kwargs)
+    if err:
+        return False, err
 
-        if discard_pw:
-            errmsg = "You cannot discard a passphrase you did not provide"
-            return False, {"msg": errmsg}
-
-        _, passphrase, err = retrieve_passphrase(module, kwargs["device"])
-        if err:
-            return False, err
-        # We retrieved a passphrase from an existing binding, so let's use it.
-        is_keyfile = False
-
-    else:
-        passphrase = kwargs["passphrase"]
-        is_keyfile = kwargs.get("is_keyfile", False)
+    discard_pw = kwargs.get("passphrase_temporary", False)
+    if discard_pw:
+        # Since we have passphrase_temporary set, let's make sure the valid
+        # passphrase we have is the one that was given as a parameter. If that
+        # is not the case, we cannot consider passphrase to be temporary, which
+        # means discard_pw should be false.
+        discard_pw = passphrase == kwargs.get("passphrase", None)
 
     # At this point we can proceed to bind.
     key, jwe, err = new_pass_jwe(
@@ -1131,7 +1217,177 @@ def bind_slot(module, **kwargs):
     return True, None
 
 
-def bindings_sanity_check(bindings, data_dir):
+def decode_jwe(module, jwe):
+    """ Decodes a JWE into its JSON form.
+    Return <JSON policy> <error> """
+
+    args = ["jose", "jwe", "fmt", "--input=-"]
+    ret, coded, _ = module.run_command(args, data=jwe, binary_data=True)
+    if ret != 0:
+        return None, {"msg": "Error applying jose jwe fmt to given JWE"}
+
+    args = ["jose", "fmt", "--json=-", "--get", "protected", "--unquote=-"]
+    ret, coded, _ = module.run_command(args, data=coded, binary_data=True)
+    if ret != 0:
+        return None, {"msg": "Error applying jose fmt: {}".format(coded)}
+
+    args = ["jose", "b64", "dec", "-i-"]
+    ret, decoded, _ = module.run_command(args, data=coded, binary_data=True)
+    if ret != 0:
+        return None, {"msg": "Error applying jose b64 dec"}
+
+    try:
+        jwe_json = json.loads(decoded)
+    except ValueError as exc:
+        return None, {"msg": str(exc)}
+    return jwe_json, None
+
+
+def decode_pin_tang(module, json_jwe, keys):
+    """ Decode a tang pin JWE.
+    Return <tang (pin)> <tang config> <keys> <error> """
+
+    if "url" not in json_jwe:
+        return None, None, {}, {"msg": "Invalid tang config: no url"}
+
+    if "adv" not in json_jwe or "keys" not in json_jwe["adv"]:
+        return None, None, {}, {"msg": "Invalid tang config: no keys in adv"}
+
+    # Let's get the thumbprint of keys.
+    for key in json_jwe["adv"]["keys"]:
+        key_str = json.dumps(key)
+        thp, err = get_thumbprint(module, key_str)
+        if err:
+            continue
+        keys[thp] = thp
+
+    return "tang", {"url": json_jwe["url"]}, keys, None
+
+
+def decode_pin_tpm2(_module, json_jwe, keys):
+    """ Decode a tpm2 pin JWE.
+    Return <tpm2 (pin)> <tpm2 config> <keys> <error> """
+
+    pin = {}
+    tpm2_keys = ["hash", "key", "pcr_bank", "pcr_ids", "pcr_digest"]
+    for key in tpm2_keys:
+        if key in json_jwe:
+            pin[key] = json_jwe[key]
+
+    return "tpm2", pin, keys, None
+
+
+def process_pin_sss(module, json_jwe, threshold, keys):
+    """ Process an sss pin.
+    Return <sss (pin)> <sss config> <keys> <error> """
+
+    pin_cfg = {}
+    for coded in json_jwe["jwe"]:
+        pin, cfg, pin_keys, err = decode_pin_config(module, coded)
+        if err:
+            continue
+
+        for key in pin_keys:
+            keys[key] = pin_keys[key]
+
+        if pin == "sss":
+            pin_cfg[pin] = cfg
+        else:
+            if pin not in pin_cfg:
+                pin_cfg[pin] = []
+            pin_cfg[pin].append(cfg)
+
+    cfg = {"t": threshold, "pins": pin_cfg}
+    return "sss", cfg, keys, None
+
+
+def decode_pin_sss(module, json_jwe, keys):
+    """ Decode an sss pin JWE.
+    Return <sss (pin)> <sss config> <keys> <error> """
+
+    if "t" not in json_jwe:
+        return None, None, {}, {"msg": "Invalid sss config: no threshold"}
+
+    threshold = json_jwe["t"]
+    return process_pin_sss(module, json_jwe, threshold, keys)
+
+
+def decode_pin_config(module, jwe):
+    """ Retrieves the configuration used for the binding represented by the
+    JWE passed as argument.
+    Return <pin> <policy> <keys> <error> """
+
+    jwe_json, err = decode_jwe(module, jwe)
+    if err:
+        return None, None, {}, err
+
+    if "clevis" not in jwe_json or "pin" not in jwe_json["clevis"]:
+        return None, None, {}, {"msg": "Invalid clevis pin config"}
+
+    pin = jwe_json["clevis"]["pin"]
+    if pin not in jwe_json["clevis"]:
+        return None, None, {}, {"msg": "Invalid clevis pin config"}
+    config = jwe_json["clevis"][pin]
+
+    decode_method = {
+        "tang": decode_pin_tang,
+        "tpm2": decode_pin_tpm2,
+        "sss": decode_pin_sss,
+    }
+    if pin not in decode_method:
+        return None, None, {}, {"msg": "Unsupported pin '{}'".format(pin)}
+
+    keys = {}
+    return decode_method[pin](module, config, keys)
+
+
+def already_bound(module, **kwargs):
+    """ Checks whether there is already a valid/working binding with the same
+    configuration as the one we would otherwise add.
+    Return <result> """
+
+    device = kwargs["device"]
+    slot = kwargs["slot"]
+
+    # Check #1 - verify whether we have clevis JWE in the slot.
+    jwe, err = get_jwe(module, device, slot, False)
+    if err:
+        return False
+
+    # Check #2 - verify whether the binding works.
+    decrypted, err = decrypt_jwe(module, jwe)
+    if err:
+        return False
+
+    # Check #3 - verify whether the decrypted passphrase is valid.
+    _, err = valid_passphrase(module, device=device, passphrase=decrypted, slot=slot)
+    if err:
+        return False
+
+    # Check #4 - binding is OK, so verify whether configuration is the same.
+    original_policy = json.loads(kwargs["auth_cfg"])
+    # To simplify the comparison, let's remove the adv key.
+    if kwargs["auth"] == "tang":
+        original_policy.pop("adv", None)
+    else:
+        for idx, _ in enumerate(original_policy["pins"]["tang"]):
+            original_policy["pins"]["tang"][idx].pop("adv", None)
+
+    pin, policy, keys, err = decode_pin_config(module, jwe)
+    if err or (pin != kwargs["auth"]) or (policy != original_policy):
+        return False
+
+    # Check #5 - binding works and has the same configuration.
+    # Verify whether there are rotated keys, in which case we should rebind.
+    for key in keys:
+        if key not in kwargs["keys"]:
+            # Key not in advertisements; probably was rotated.
+            return False
+
+    return True
+
+
+def bindings_sanity_check(bindings, data_dir, check_mode):
     """ Performs sanity-checking on the bindings list and related arguments.
     Return: <bindings> <error> """
 
@@ -1163,7 +1419,12 @@ def bindings_sanity_check(bindings, data_dir):
             errmsg = "Each binding must have a device set"
             return None, {"msg": errmsg}
 
-        if "key_file" in binding:
+        # When running under check mode, key_file is not used, which means we
+        # also do not need to have data_dir defined.
+        if "key_file" in binding and not check_mode:
+            if not data_dir:
+                return None, {"msg": "data_dir needs to be defined"}
+
             basefile = os.path.basename(binding["key_file"])
             keyfile = os.path.join(data_dir, basefile)
             bindings[idx]["key_file"] = cmd_quote(keyfile)
@@ -1183,53 +1444,81 @@ def bindings_sanity_check(bindings, data_dir):
     return bindings, None
 
 
+def process_bind_operation(module, binding):
+    """ Process an operation to add a binding to an encrypted device.
+    Return: <changed (boolean)> <err> """
+
+    auth_name, cfg, cfg_keys, err = generate_config(
+        module, binding["servers"], binding["threshold"]
+    )
+    if err:
+        raise NbdeClientClevisError(dict(msg=err))
+
+    passphrase = binding.get("passphrase", None)
+    if not passphrase:
+        passphrase = binding.get("key_file", None)
+    is_keyfile = "key_file" in binding
+
+    args = dict(
+        device=binding["device"],
+        slot=binding["slot"],
+        auth=auth_name,
+        auth_cfg=cfg,
+        passphrase=passphrase,
+        is_keyfile=is_keyfile,
+        overwrite=True,
+        keys=cfg_keys,
+        passphrase_temporary=binding["passphrase_temporary"],
+    )
+
+    if already_bound(module, **args):
+        return False, None
+
+    if module.check_mode:
+        return True, None
+
+    _, err = bind_slot(module, **args)
+    if err:
+        return False, err
+
+    return True, None
+
+
 def process_bindings(module, bindings):
     """ Process the list of bindings and performs the appropriate operations.
     Return: <result> """
 
     original_bindings = bindings
     result = {"changed": False, "original_bindings": bindings}
-    if module.check_mode:
-        return result
 
     for binding in bindings:
-        if binding["state"] != "absent":
-            auth_name, cfg, err = generate_config(
-                module, binding["servers"], binding["threshold"]
-            )
-            if err:
-                raise NbdeClientClevisError(dict(msg=err))
-
-        slot = binding["slot"]
         if binding["state"] == "absent":
-            _, err = is_slot_bound(module, binding["device"], slot)
+            _, err = is_slot_bound(module, binding["device"], binding["slot"])
             if err:
                 # Slot not bound, moving on.
                 continue
+
+            if module.check_mode:
+                result["changed"] = True
+                return result
+
             _, err = unbind_slot(module, binding["device"], binding["slot"])
+            if err:
+                err["original_bindings"] = original_bindings
+                raise NbdeClientClevisError(err)
+
+            result["changed"] = True
         else:
-            passphrase = binding.get("passphrase", None)
-            if not passphrase:
-                passphrase = binding.get("key_file", None)
-            is_keyfile = "key_file" in binding
+            changed, err = process_bind_operation(module, binding)
+            if err:
+                err["original_bindings"] = original_bindings
+                raise NbdeClientClevisError(err)
 
-            _, err = bind_slot(
-                module,
-                device=binding["device"],
-                slot=binding["slot"],
-                auth=auth_name,
-                auth_cfg=cfg,
-                passphrase=passphrase,
-                is_keyfile=is_keyfile,
-                overwrite=True,
-                passphrase_temporary=binding["passphrase_temporary"],
-            )
+            if changed:
+                result["changed"] = True
+                if module.check_mode:
+                    return result
 
-        if err:
-            err["original_bindings"] = original_bindings
-            raise NbdeClientClevisError(err)
-
-        result["changed"] = True
     return result
 
 
@@ -1244,7 +1533,9 @@ def run_module():
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
     params = module.params
 
-    bindings, err = bindings_sanity_check(params["bindings"], params["data_dir"])
+    bindings, err = bindings_sanity_check(
+        params["bindings"], params["data_dir"], module.check_mode
+    )
 
     if err:
         err["changed"] = False

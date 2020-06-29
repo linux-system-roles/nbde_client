@@ -30,6 +30,14 @@
               - nbde_client_unlock.failed
               - nbde_client_close.failed
 
+        - name: Assert idempotency when trying to only unbind
+          include: tasks/verify_idempotency.yml
+          vars:
+            nbde_client_bindings:
+              - device: "{{ nbde_client_test_device }}"
+                passphrase: "{{ nbde_client_test_pass }}"
+                state: absent
+
       always:
         - name: Clean up test environment
           include: tasks/cleanup_test.yml
