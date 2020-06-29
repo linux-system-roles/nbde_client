@@ -701,7 +701,7 @@ def format_jwe(module, data, is_compact):
     ret, jwe, err = module.run_command(args, data=data, binary_data=True)
     if ret != 0:
         return None, {"msg": err}
-    return jwe, None
+    return jwe.rstrip(), None
 
 
 def save_slot_luks2(module, **kwargs):
@@ -1125,11 +1125,19 @@ def get_valid_passphrase(module, **kwargs):
     if not err:
         return passphrase, is_keyfile, None
 
-    # We either were not provided a passphrase, or it didn't prove to be valid.
+    # If we provided a passphrase -- which has shown to to be invalid -- and
+    # passphrase_temporary is not set, error out.
+    passphrase_temporary = kwargs.get("passphrase_temporary", False)
+    if not passphrase_temporary and passphrase is not None:
+        return None, False, {"msg": "Invalid passphrase for device"}
+
+    # We either were not provided a passphrase, or it didn't prove to be valid,
+    # but passphrase_temporary was set.
     # Let's try to retrieve one from existing bindings, if possible.
     _, passphrase, err = retrieve_passphrase(module, kwargs["device"])
     if err:
         return None, False, err
+
     # We retrieved a passphrase from an existing binding, so let's use it.
     is_keyfile = False
     return passphrase, is_keyfile, None
