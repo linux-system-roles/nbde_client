@@ -13,7 +13,7 @@
 
   tasks:
     - name: Set up test environment
-      include: tasks/setup_test.yml
+      include_tasks: tasks/setup_test.yml
 
     - name: Run the test
       block:
@@ -22,7 +22,7 @@
             name: linux-system-roles.nbde_client
 
         - name: Attempt to unlock device
-          include: tasks/verify_unlock_device.yml
+          include_tasks: tasks/verify_unlock_device.yml
 
         - name: Make sure the attempt to unlock failed
           assert:
@@ -31,7 +31,7 @@
               - nbde_client_close.failed
 
         - name: Assert idempotency when trying to only unbind
-          include: tasks/verify_idempotency.yml
+          include_tasks: tasks/verify_idempotency.yml
           vars:
             nbde_client_bindings:
               - device: "{{ nbde_client_test_device }}"
@@ -40,5 +40,5 @@
 
       always:
         - name: Clean up test environment
-          include: tasks/cleanup_test.yml
+          include_tasks: tasks/cleanup_test.yml
 # vim:set ts=2 sw=2 et:

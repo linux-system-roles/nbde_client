@@ -10,7 +10,7 @@
 
   tasks:
     - name: Set up test environment
-      include: tasks/setup_test.yml
+      include_tasks: tasks/setup_test.yml
 
     - name: Run the test
       block:
@@ -19,7 +19,7 @@
             name: linux-system-roles.nbde_client
 
         - name: Attempt to unlock device
-          include: tasks/verify_unlock_device.yml
+          include_tasks: tasks/verify_unlock_device.yml
 
         - name: Make sure the attempt to unlock succeeded
           assert:
@@ -28,10 +28,10 @@
               - not nbde_client_close.failed
 
         - name: Assert idempotency
-          include: tasks/verify_idempotency.yml
+          include_tasks: tasks/verify_idempotency.yml
 
         - name: Rotate keys
-          include: tasks/rotate_keys.yml
+          include_tasks: tasks/rotate_keys.yml
 
         - name: Use nbde_client role - idempotency check - change expected
           include_role:
@@ -43,9 +43,9 @@
               - __nbde_client_clevis_check_state is changed
 
         - name: Assert idempotency again - change not expected
-          include: tasks/verify_idempotency.yml
+          include_tasks: tasks/verify_idempotency.yml
 
       always:
         - name: Clean up test environment
-          include: tasks/cleanup_test.yml
+          include_tasks: tasks/cleanup_test.yml
 # vim:set ts=2 sw=2 et:
