@@ -1,0 +1,8 @@
+---
+# tasks file for parentrole
+
+- include_role:
+    name: "{{ roletoinclude }}"
+
+- assert:
+    that: not __caller_override
