@@ -10,4 +10,9 @@
     state: absent
   delegate_to: localhost
 
+- name: Clean up dummy key file on managed host
+  file:
+    path: "{{ nbde_client_test_key_file }}"
+    state: absent
+
 # vim:set ts=2 sw=2 et:
