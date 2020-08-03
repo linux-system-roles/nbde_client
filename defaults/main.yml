@@ -9,11 +9,11 @@ nbde_client_provider: clevis
 # Example:
 # nbde_client_bindings:
 #    - device: /dev/sda1
-#      key_file: /vault/keyfile
+#      encryption_key_src: /vault/keyfile
 #      state: present
 #      slot: 2
 #      threshold: 1
-#      passphrase_temporary: no
+#      password_temporary: no
 #      servers:
 #        - http://server1.example.com
 #        - http://server2.example.com

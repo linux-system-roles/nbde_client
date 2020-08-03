@@ -4,8 +4,8 @@
   vars:
     nbde_client_bindings:
       - device: "{{ nbde_client_test_device }}"
-        passphrase: "{{ nbde_client_test_pass }}"
-        passphrase_temporary: yes
+        encryption_password: "{{ nbde_client_test_pass }}"
+        password_temporary: yes
         servers:
           - http://localhost
       - device: "{{ nbde_client_test_device }}"

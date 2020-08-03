@@ -43,11 +43,14 @@ options:
               - device: the path of the underlying encrypted device. This
                 device must be already configured as a LUKS device before
                 using the module (REQUIRED)
-              - passphrase: a valid passphrase for opening/unlocking the
-                specified device
-              - key_file: a key file valid for opening/unlocking the specified
-                device. When present, the key file should be located at
-                data_dir
+              - encryption_password: a valid password or passphrase for
+                opening/unlocking the specified device
+              - encryption_key: a key file on the managed node valid for
+                opening/unlocking the specified device. When present, the key
+                file should be located at data_dir
+              - encryption_key_src: a key file on the control node valid for
+                opening/unlocking the specified device.  This was copied to
+                data_dir.  This will be used if encryption_key is not specified.
               - state: either present/absent, to indicate whether the binding
                 described should be added or removed
               - slot: the slot to use for the binding
@@ -55,15 +58,15 @@ options:
               - threshold: the threshold for the the Shamir Secret Sharing
                 (SSS) scheme that is put in place when using more than one
                 server
-              - passphrase_temporary: if yes, the passphrase that was provided
-                via the passphrase or key file arguments will be used to unlock
-                the encrypted device and then it will be removed from the LUKS
-                device after the binding operation completes, i.e., it will
-                not be valid anymore.
+              - password_temporary: if yes, the password or passphrase that was
+                provided via the encryption_password or encryption_key file arguments
+                will be used to unlock the encrypted device and then it will be removed
+                from the LUKS device after the binding operation completes, i.e., it
+                will not be valid anymore.
         required: true
     data_dir:
         description:
-            - a directory used to store temporary files like key files
+            - a directory used to store temporary files like encryption_key files
         required: false
 author:
     - Sergio Correia (scorreia@redhat.com)
@@ -75,7 +78,7 @@ EXAMPLES = """
 - name: Set up a clevis binding in /dev/sda1
   nbde_client_bindings:
     - device: /dev/sda1
-      passphrase: password
+      encryption_password: password
       servers:
         - http://server1.example.com
         - http://server2.example.com
@@ -84,7 +87,7 @@ EXAMPLES = """
 - name: Remove binding from slot 2 in /dev/sda1
   nbde_client_bindings:
       - device: /dev/sda1
-        passphrase: password
+        encryption_password: password
         slot: 2
         state: absent
 """
@@ -462,7 +465,7 @@ def run_cryptsetup(module, args, **kwargs):
         return out, None
 
     # This is privileged operation, so we need to provide either a passphrase
-    # of a key file.
+    # or a key file.
     if is_keyfile:
         args.extend(["--key-file", passphrase])
         ret, out, err = module.run_command(args, data=data, binary_data=True)
@@ -1126,13 +1129,13 @@ def get_valid_passphrase(module, **kwargs):
         return passphrase, is_keyfile, None
 
     # If we provided a passphrase -- which has shown to to be invalid -- and
-    # passphrase_temporary is not set, error out.
-    passphrase_temporary = kwargs.get("passphrase_temporary", False)
-    if not passphrase_temporary and passphrase is not None:
+    # password_temporary is not set, error out.
+    password_temporary = kwargs.get("password_temporary", False)
+    if not password_temporary and passphrase is not None:
         return None, False, {"msg": "Invalid passphrase for device"}
 
     # We either were not provided a passphrase, or it didn't prove to be valid,
-    # but passphrase_temporary was set.
+    # but password_temporary was set.
     # Let's try to retrieve one from existing bindings, if possible.
     _, passphrase, err = retrieve_passphrase(module, kwargs["device"])
     if err:
@@ -1161,9 +1164,9 @@ def bind_slot(module, **kwargs):
     if err:
         return False, err
 
-    discard_pw = kwargs.get("passphrase_temporary", False)
+    discard_pw = kwargs.get("password_temporary", False)
     if discard_pw:
-        # Since we have passphrase_temporary set, let's make sure the valid
+        # Since we have password_temporary set, let's make sure the valid
         # passphrase we have is the one that was given as a parameter. If that
         # is not the case, we cannot consider passphrase to be temporary, which
         # means discard_pw should be false.
@@ -1394,11 +1397,12 @@ def bindings_sanity_check(bindings, data_dir, check_mode):
     # bindings is a list of the following:
     # {
     #   device: [REQUIRED]
-    #   pass
-    #   key_file
+    #   encryption_password: a password
+    #   encryption_key: /data_dir/filename
+    #   encryption_key_src: /path/to/file/on/controlnode
     #   slot: 1 (default)
     #   state: present (default) | absent
-    #   passphrase_temporary: no (default)
+    #   password_temporary: no (default)
     #   threshold: 1 (default)
     #   servers: [] (default)
     # }
@@ -1419,21 +1423,26 @@ def bindings_sanity_check(bindings, data_dir, check_mode):
             errmsg = "Each binding must have a device set"
             return None, {"msg": errmsg}
 
-        # When running under check mode, key_file is not used, which means we
+        # When running under check mode, encryption_key is not used, which means we
         # also do not need to have data_dir defined.
-        if "key_file" in binding and not check_mode:
+        if (
+            "encryption_key" in binding or "encryption_key_src" in binding
+        ) and not check_mode:
             if not data_dir:
                 return None, {"msg": "data_dir needs to be defined"}
 
-            basefile = os.path.basename(binding["key_file"])
+            if "encryption_key" in binding:
+                basefile = os.path.basename(binding["encryption_key"])
+            else:
+                basefile = os.path.basename(binding["encryption_key_src"])
             keyfile = os.path.join(data_dir, basefile)
-            bindings[idx]["key_file"] = cmd_quote(keyfile)
+            bindings[idx]["encryption_key"] = cmd_quote(keyfile)
 
         # The defaults for the remaining binding attributes.
         binding_defaults = {
             "slot": 1,
             "threshold": 1,
-            "passphrase_temporary": False,
+            "password_temporary": False,
             "servers": [],
         }
 
@@ -1454,10 +1463,10 @@ def process_bind_operation(module, binding):
     if err:
         raise NbdeClientClevisError(dict(msg=err))
 
-    passphrase = binding.get("passphrase", None)
+    passphrase = binding.get("encryption_password", None)
     if not passphrase:
-        passphrase = binding.get("key_file", None)
-    is_keyfile = "key_file" in binding
+        passphrase = binding.get("encryption_key", None)
+    is_keyfile = "encryption_key" in binding
 
     args = dict(
         device=binding["device"],
@@ -1468,7 +1477,7 @@ def process_bind_operation(module, binding):
         is_keyfile=is_keyfile,
         overwrite=True,
         keys=cfg_keys,
-        passphrase_temporary=binding["passphrase_temporary"],
+        password_temporary=binding["password_temporary"],
     )
 
     if already_bound(module, **args):

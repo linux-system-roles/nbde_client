@@ -13,12 +13,12 @@
           vars:
             nbde_client_bindings:
               - device: "{{ nbde_client_test_device }}"
-                passphrase: "{{ nbde_client_test_pass }}"
+                encryption_password: "{{ nbde_client_test_pass }}"
                 slot: 1
                 servers:
                   - http://localhost
 
-        - name: Add binding to slot 2 without providing passphrase
+        - name: Add binding to slot 2 without providing encryption_password
           include_role:
             name: linux-system-roles.nbde_client
           vars:
@@ -83,7 +83,7 @@
             path: "{{ nbde_client_temp_adv.path }}"
             state: absent
 
-        - name: Add binding to slot 2 without providing passphrase
+        - name: Add binding to slot 2 without providing encryption_password
           include_role:
             name: linux-system-roles.nbde_client
           vars:
