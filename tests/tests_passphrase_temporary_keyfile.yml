@@ -31,6 +31,11 @@
               - not nbde_client_unlock.failed
               - not nbde_client_close.failed
 
+        - name: copy the key file to the managed host
+          copy:
+            src: "{{ nbde_client_test_key_file }}"
+            dest: "{{ nbde_client_test_key_file }}"
+
         - name: Attempt to check whether default key file works
           include_tasks: tasks/verify_default_key_file.yml
 
@@ -38,6 +43,8 @@
           assert:
             that:
               - nbde_client_key_file is not success
+              - nbde_client_key_file.stderr ==
+                "No key available with this passphrase."
 
         - name: Assert idempotency
           include_tasks: tasks/verify_idempotency.yml
