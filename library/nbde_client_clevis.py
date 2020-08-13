@@ -35,7 +35,7 @@ description:
     - "Module manages clevis bindings on encryped devices to match the state
        specified in input parameters.
 options:
-    nbde_client_bindings:
+    bindings:
         description:
             - a list of dictionaries that describe a binding that should be
               either added or removed from a given device/slot. It supports
