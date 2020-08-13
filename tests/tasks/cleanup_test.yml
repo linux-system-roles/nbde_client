@@ -6,13 +6,13 @@
 
 - name: Clean up dummy key file
   file:
-    path: "{{ nbde_client_test_key_file }}"
+    path: "{{ nbde_client_test_encryption_key_src }}"
     state: absent
   delegate_to: localhost
 
 - name: Clean up dummy key file on managed host
   file:
-    path: "{{ nbde_client_test_key_file }}"
+    path: "{{ nbde_client_test_encryption_key_src }}"
     state: absent
 
 # vim:set ts=2 sw=2 et:

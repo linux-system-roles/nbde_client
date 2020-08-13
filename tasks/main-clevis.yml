@@ -17,22 +17,22 @@
     - name: Create temporary directory to hold key files
       tempfile:
         state: directory
-        suffix: nbde_client_key_files
+        suffix: nbde_client_encryption_keys
       when:
         - nbde_client_bindings | default([])
       register: nbde_client_tempdir
 
     - name: Ensure we transfer key files
       copy:
-        src: "{{ item.key_file }}"
+        src: "{{ item.encryption_key_src }}"
         dest: "{{ nbde_client_tempdir.path }}/"
         mode: '0400'
       when:
         - nbde_client_tempdir.path is defined
-        - item.key_file | default("")
+        - item.encryption_key_src | default("")
       loop: "{{ nbde_client_bindings }}"
       loop_control:
-        label: "{{ item.key_file | default('') }}"
+        label: "{{ item.encryption_key_src | default('') }}"
 
     - name: Perform clevis operations
       when:

@@ -4,11 +4,11 @@
   vars:
     nbde_client_bindings:
       - device: "{{ nbde_client_test_device }}"
-        passphrase: "{{ nbde_client_test_pass }}"
+        encryption_password: "{{ nbde_client_test_pass }}"
         servers:
           - http://localhost
       - device: "{{ nbde_client_test_device }}"
-        passphrase: "{{ nbde_client_test_pass }}"
+        encryption_password: "{{ nbde_client_test_pass }}"
         state: absent
 
   tasks:
@@ -35,7 +35,7 @@
           vars:
             nbde_client_bindings:
               - device: "{{ nbde_client_test_device }}"
-                passphrase: "{{ nbde_client_test_pass }}"
+                encryption_password: "{{ nbde_client_test_pass }}"
                 state: absent
 
       always:
