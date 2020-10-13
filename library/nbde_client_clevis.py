@@ -113,8 +113,8 @@ class NbdeClientClevisError(Exception):
 
 
 def initialize_device(module, luks_type, device):
-    """ Initialize LUKSMeta. This is required only for LUKS1 devices.
-    Return <error> """
+    """Initialize LUKSMeta. This is required only for LUKS1 devices.
+    Return <error>"""
 
     if luks_type == "luks1":
         args = ["luksmeta", "test", "-d", device]
@@ -131,8 +131,8 @@ def initialize_device(module, luks_type, device):
 
 
 def get_luks_type(module, device, initialize=True):
-    """ Get the LUKS type of the device.
-    Return: <luks type> <error> """
+    """Get the LUKS type of the device.
+    Return: <luks type> <error>"""
 
     args = ["cryptsetup", "isLuks", device]
     ret_code, _, stderr = module.run_command(args)
@@ -154,8 +154,8 @@ def get_luks_type(module, device, initialize=True):
 
 
 def get_jwe_luks1(module, device, slot):
-    """ Get a JWE from a specific slot in a LUKS1 device.
-    Return: <jwe> <error> """
+    """Get a JWE from a specific slot in a LUKS1 device.
+    Return: <jwe> <error>"""
 
     args = ["luksmeta", "show", "-d", device]
     ret_code, stdout, stderr = module.run_command(args)
@@ -181,8 +181,8 @@ def get_jwe_luks1(module, device, slot):
 
 
 def get_jwe_from_luks2_token(module, token):
-    """ Retrieve the JWE from a JSON LUKS2 token.
-    Return <jwe> <error> """
+    """Retrieve the JWE from a JSON LUKS2 token.
+    Return <jwe> <error>"""
 
     args = ["jose", "fmt", "--json", token, "--object", "--get", "jwe", "--output=-"]
     ret, jwe_obj, err = module.run_command(args)
@@ -195,8 +195,8 @@ def get_jwe_from_luks2_token(module, token):
 
 
 def get_jwe_luks2(module, device, slot):
-    """ Get a JWE from a specific slot in a LUKS2 device.
-    Return: <jwe> <token id> <error> """
+    """Get a JWE from a specific slot in a LUKS2 device.
+    Return: <jwe> <token id> <error>"""
 
     args = ["cryptsetup", "luksDump", device]
     ret_code, stdout, stderr = module.run_command(args)
@@ -230,8 +230,8 @@ def get_jwe_luks2(module, device, slot):
 
 
 def get_jwe(module, device, slot, initialize=True):
-    """ Get a clevis JWE from a given device and slot.
-    Return: <jwe> <error> """
+    """Get a clevis JWE from a given device and slot.
+    Return: <jwe> <error>"""
 
     luks, err = get_luks_type(module, device, initialize)
     if err:
@@ -244,8 +244,8 @@ def get_jwe(module, device, slot, initialize=True):
 
 
 def is_slot_bound(module, device, slot):
-    """ Checks whether a specific slot in a given device is bound to clevis.
-    Return: <boolean> <error> """
+    """Checks whether a specific slot in a given device is bound to clevis.
+    Return: <boolean> <error>"""
 
     _, err = get_jwe(module, device, slot)
     if err:
@@ -254,8 +254,8 @@ def is_slot_bound(module, device, slot):
 
 
 def download_adv(module, server):
-    """ Downloads the advertisement from a specific nbde_server.
-    Return: <advertsement> <error> """
+    """Downloads the advertisement from a specific nbde_server.
+    Return: <advertsement> <error>"""
 
     url = server
     # Add http:// prefix, if missing.
@@ -278,8 +278,8 @@ def download_adv(module, server):
 
 
 def get_thumbprint(module, key):
-    """ Gets the tumbprint of the key passed as argument.
-    Return <thumbprint> <error> """
+    """Gets the tumbprint of the key passed as argument.
+    Return <thumbprint> <error>"""
 
     args = ["jose", "jwk", "thp", "--input=-"]
     ret, thp, _ = module.run_command(args, data=key, binary_data=True)
@@ -289,8 +289,8 @@ def get_thumbprint(module, key):
 
 
 def keys_from_adv(module, adv):
-    """ Gets the keys from a tang advertisement.
-    Return <keys> """
+    """Gets the keys from a tang advertisement.
+    Return <keys>"""
 
     keys = {}
     # Get keys from advertisement.
@@ -326,8 +326,8 @@ def keys_from_adv(module, adv):
 
 
 def generate_config(module, servers, threshold):
-    """ Creates the config to be used when binding a group of devices.
-    Return: <pin> <config> <keys> <error> """
+    """Creates the config to be used when binding a group of devices.
+    Return: <pin> <config> <keys> <error>"""
 
     # No servers, so there is nothing to do here.
     if not servers or len(servers) == 0:
@@ -357,9 +357,9 @@ def generate_config(module, servers, threshold):
 
 
 def parse_keyslots_luks1(luks_dump):
-    """ Lists the used keyslots in a LUKS1 device. These may or may not be
+    """Lists the used keyslots in a LUKS1 device. These may or may not be
     bound to clevis.
-    Return: <used keyslots> <error> """
+    Return: <used keyslots> <error>"""
 
     if not luks_dump:
         return None, {"msg": "Empty dump provided"}
@@ -376,9 +376,9 @@ def parse_keyslots_luks1(luks_dump):
 
 
 def parse_keyslots_luks2(luks_dump):
-    """ Lists the used keyslots in a LUKS2 device. These may or may not be
+    """Lists the used keyslots in a LUKS2 device. These may or may not be
     bound to clevis.
-    Return: <used keyslots> <error> """
+    Return: <used keyslots> <error>"""
 
     if not luks_dump:
         return None, {"msg": "Empty dump provided"}
@@ -395,9 +395,9 @@ def parse_keyslots_luks2(luks_dump):
 
 
 def keyslots_in_use(module, device):
-    """ Lists the used keyslots in a LUKS device. These may or may not be
+    """Lists the used keyslots in a LUKS device. These may or may not be
     bound to clevis.
-    Return: <used keyslots> <error> """
+    Return: <used keyslots> <error>"""
 
     luks, err = get_luks_type(module, device)
     if err:
@@ -419,8 +419,8 @@ def keyslots_in_use(module, device):
 
 
 def bound_slots(module, device):
-    """ Lists the clevis-bound slots in a LUKS device.
-    Return: <bound slots> <error> """
+    """Lists the clevis-bound slots in a LUKS device.
+    Return: <bound slots> <error>"""
 
     slots, err = keyslots_in_use(module, device)
     if err:
@@ -437,8 +437,8 @@ def bound_slots(module, device):
 
 
 def decrypt_jwe(module, jwe):
-    """ Attempt to decrypt JWE.
-    Return: <decrypted JWE> <error> """
+    """Attempt to decrypt JWE.
+    Return: <decrypted JWE> <error>"""
 
     args = ["clevis", "decrypt"]
     ret, decrypted, err = module.run_command(args, data=jwe, binary_data=True)
@@ -448,8 +448,8 @@ def decrypt_jwe(module, jwe):
 
 
 def run_cryptsetup(module, args, **kwargs):
-    """ Run cryptsetup command.
-    Return: <output> <error> """
+    """Run cryptsetup command.
+    Return: <output> <error>"""
 
     passphrase = kwargs.get("passphrase", None)
     is_keyfile = kwargs.get("is_keyfile", False)
@@ -488,8 +488,8 @@ def run_cryptsetup(module, args, **kwargs):
 
 
 def valid_passphrase(module, **kwargs):
-    """ Tests whether the given passphrase is valid for the specified device.
-    Return: <boolean> <error> """
+    """Tests whether the given passphrase is valid for the specified device.
+    Return: <boolean> <error>"""
 
     for req in ["device", "passphrase"]:
         if req not in kwargs or kwargs[req] is None:
@@ -515,8 +515,8 @@ def valid_passphrase(module, **kwargs):
 
 
 def retrieve_passphrase(module, device):
-    """ Attempt to retrieve a valid passphrase from a clevis-bound device.
-    Return: <slot> <passphrase> <error> """
+    """Attempt to retrieve a valid passphrase from a clevis-bound device.
+    Return: <slot> <passphrase> <error>"""
 
     slots, err = bound_slots(module, device)
     if err:
@@ -540,9 +540,9 @@ def retrieve_passphrase(module, device):
 
 
 def save_slot_luks1(module, **kwargs):
-    """ Saves a given data to a specific LUKS1 device and slot. The last
+    """Saves a given data to a specific LUKS1 device and slot. The last
     parameter indicated whether we should overwrite existing metadata.
-    Return: <saved> <error> """
+    Return: <saved> <error>"""
 
     for req in ["device", "slot", "data", "overwrite"]:
         if req not in kwargs:
@@ -609,9 +609,9 @@ def save_slot_luks1(module, **kwargs):
 
 
 def backup_luks1_device(module, device):
-    """ Backup LUKSmeta metadata from LUKS1 device, as it can be corrupted when
+    """Backup LUKSmeta metadata from LUKS1 device, as it can be corrupted when
     saving new metadata.
-    Return: <backup> <error> """
+    Return: <backup> <error>"""
 
     bound, err = bound_slots(module, device)
     if err:
@@ -628,8 +628,8 @@ def backup_luks1_device(module, device):
 
 
 def restore_luks1_device(module, device, backup):
-    """ Restore LUKSmeta metadata from the specified backup.
-    Return: <error> """
+    """Restore LUKSmeta metadata from the specified backup.
+    Return: <error>"""
 
     args = ["luksmeta", "init", "-f", "-d", device]
     ret_code, _, stderr = module.run_command(args)
@@ -647,8 +647,8 @@ def restore_luks1_device(module, device, backup):
 
 
 def backup_luks2_token(module, device, token_id):
-    """ Backup LUKS2 token, as we may need to restore the metadata.
-    Return: <backup> <error> """
+    """Backup LUKS2 token, as we may need to restore the metadata.
+    Return: <backup> <error>"""
 
     args = ["cryptsetup", "token", "export", "--token-id", token_id, device]
     ret, token, err = module.run_command(args)
@@ -663,8 +663,8 @@ def backup_luks2_token(module, device, token_id):
 
 
 def import_luks2_token(module, device, token):
-    """ Restore LUKS2 token.
-    Return: <error> """
+    """Restore LUKS2 token.
+    Return: <error>"""
 
     if not token or len(token) == 0:
         return {"msg": "import_luks2_token: Invalid token"}
@@ -683,8 +683,8 @@ def import_luks2_token(module, device, token):
 
 
 def make_luks2_token(slot, data):
-    """ Prepare a JSON LUKS2 token for a given slot.
-    Return <token> <error> """
+    """Prepare a JSON LUKS2 token for a given slot.
+    Return <token> <error>"""
 
     try:
         metadata = {"type": "clevis", "keyslots": [str(slot)], "jwe": json.loads(data)}
@@ -695,8 +695,8 @@ def make_luks2_token(slot, data):
 
 
 def format_jwe(module, data, is_compact):
-    """ Format JWE to be saved in a LUKS2 token.
-    Return <jwe> <error> """
+    """Format JWE to be saved in a LUKS2 token.
+    Return <jwe> <error>"""
 
     args = ["jose", "jwe", "fmt", "--input=-"]
     if is_compact:
@@ -708,9 +708,9 @@ def format_jwe(module, data, is_compact):
 
 
 def save_slot_luks2(module, **kwargs):
-    """ Saves a given data to a specific LUKS2 device and slot. The last
+    """Saves a given data to a specific LUKS2 device and slot. The last
     parameter indicates whether we should overwrite existing metadata.
-    Return: <saved> <error> """
+    Return: <saved> <error>"""
 
     for req in ["device", "slot", "data", "overwrite"]:
         if req not in kwargs:
@@ -784,8 +784,8 @@ def save_slot_luks2(module, **kwargs):
 
 
 def save_slot(module, **kwargs):
-    """ Saves data to a specific LUKS device and slot.
-    Return <saved> <error> """
+    """Saves data to a specific LUKS device and slot.
+    Return <saved> <error>"""
 
     for req in ["device", "slot", "data", "overwrite"]:
         if req not in kwargs:
@@ -801,9 +801,9 @@ def save_slot(module, **kwargs):
 
 
 def is_keyslot_in_use(module, device, slot):
-    """ Returns a boolean indicating whether a given slot is in use by a LUKS
+    """Returns a boolean indicating whether a given slot is in use by a LUKS
     device. This does not mean the slot is clevis-bound necessarily.
-    Return: <boolean> """
+    Return: <boolean>"""
 
     slots, err = keyslots_in_use(module, device)
     if err:
@@ -812,8 +812,8 @@ def is_keyslot_in_use(module, device, slot):
 
 
 def set_passphrase(module, **kwargs):
-    """ Adds or replace a LUKS passphrase in a give slot.
-    Return: <result> <error> """
+    """Adds or replace a LUKS passphrase in a give slot.
+    Return: <result> <error>"""
 
     for req in ["device", "slot", "valid_passphrase", "new_passphrase"]:
         if req not in kwargs:
@@ -906,9 +906,9 @@ def set_passphrase(module, **kwargs):
 
 
 def unbind_slot_luks1(module, device, slot):
-    """ Unbind slot in a LUKS1 device. This involves removing both the clevis
+    """Unbind slot in a LUKS1 device. This involves removing both the clevis
     metadata in LUKSMeta as well as its associated keyslot.
-    Return <result> <error> """
+    Return <result> <error>"""
     _, err = get_jwe_luks1(module, device, slot)
     if err:
         errmsg = "{}:{} is not bound to clevis".format(device, slot)
@@ -928,9 +928,9 @@ def unbind_slot_luks1(module, device, slot):
 
 
 def unbind_slot_luks2(module, device, slot):
-    """ Unbind slot in a LUKS2 device. This involves removing both the clevis
+    """Unbind slot in a LUKS2 device. This involves removing both the clevis
     metadata as well as its associated keyslot.
-    Return <result> <error> """
+    Return <result> <error>"""
     _, token_id, err = get_jwe_luks2(module, device, slot)
     if err:
         errmsg = "{}:{} is not bound to clevis".format(device, slot)
@@ -948,9 +948,9 @@ def unbind_slot_luks2(module, device, slot):
 
 
 def unbind_slot(module, device, slot):
-    """ Unbind slot in a LUKS device. This involves removing the clevis
+    """Unbind slot in a LUKS device. This involves removing the clevis
     metadata as well as its associated passphrase.
-    Return: <result> <error> """
+    Return: <result> <error>"""
 
     luks, err = get_luks_type(module, device)
     if err:
@@ -962,8 +962,8 @@ def unbind_slot(module, device, slot):
 
 
 def new_key(module, device):
-    """ Generate a new key with the same entropy as the LUKS master key.
-    Return <key> <error> """
+    """Generate a new key with the same entropy as the LUKS master key.
+    Return <key> <error>"""
 
     luks, err = get_luks_type(module, device)
     if err:
@@ -991,9 +991,9 @@ def new_key(module, device):
 
 
 def new_pass_jwe(module, device, pin, pin_cfg):
-    """ Generates a new pass and returns it and it encrypted with the specified
+    """Generates a new pass and returns it and it encrypted with the specified
     pin.
-    Return: <pass> <jwe> <error> """
+    Return: <pass> <jwe> <error>"""
 
     key, err = new_key(module, device)
     if err:
@@ -1014,8 +1014,8 @@ def new_pass_jwe(module, device, pin, pin_cfg):
 
 
 def can_bind_slot(module, device, slot, overwrite):
-    """ Checks whether we can use this slot for binding clevis.
-    Return <result> <error> """
+    """Checks whether we can use this slot for binding clevis.
+    Return <result> <error>"""
 
     # Check if valid LUKS device.
     _, err = get_luks_type(module, device)
@@ -1039,8 +1039,8 @@ def can_bind_slot(module, device, slot, overwrite):
 
 
 def discard_passphrase(module, **kwargs):
-    """ Discard a passphrase from the LUKS device.
-    Return <result> <error> """
+    """Discard a passphrase from the LUKS device.
+    Return <result> <error>"""
 
     for req in ["device", "passphrase"]:
         if req not in kwargs:
@@ -1059,9 +1059,9 @@ def discard_passphrase(module, **kwargs):
 
 
 def prepare_to_rebind(module, device, slot):
-    """ Backups metadata from device and also remove it, in preparation for a
+    """Backups metadata from device and also remove it, in preparation for a
     rebind operation.
-    Return <backup> <error> """
+    Return <backup> <error>"""
 
     luks_type, err = get_luks_type(module, device)
     if err:
@@ -1098,8 +1098,8 @@ def prepare_to_rebind(module, device, slot):
 
 
 def restore_failed_rebind(module, device, backup):
-    """ Restore metadata after a failed rebind operation.
-    Return <error> """
+    """Restore metadata after a failed rebind operation.
+    Return <error>"""
 
     luks_type, err = get_luks_type(module, device)
     if err:
@@ -1111,17 +1111,20 @@ def restore_failed_rebind(module, device, backup):
 
 
 def get_valid_passphrase(module, **kwargs):
-    """ Gets valid passphrase from input parameters. It first tries to validate
+    """Gets valid passphrase from input parameters. It first tries to validate
     the passed passphrase, if any, and then tries to retrieve a passphrase from
     existing bindings, otherwise.
-    Return <passphrase> <is_keyfile> (boolean) <error> """
+    Return <passphrase> <is_keyfile> (boolean) <error>"""
 
     passphrase = kwargs.get("passphrase", None)
     is_keyfile = kwargs.get("is_keyfile", False)
 
     # Now let's check if we have a valid passphrase.
     _, err = valid_passphrase(
-        module, device=kwargs["device"], passphrase=passphrase, is_keyfile=is_keyfile,
+        module,
+        device=kwargs["device"],
+        passphrase=passphrase,
+        is_keyfile=is_keyfile,
     )
 
     # We have a valid passphrase, so that's fine.
@@ -1147,8 +1150,8 @@ def get_valid_passphrase(module, **kwargs):
 
 
 def bind_slot(module, **kwargs):
-    """ Create a clevis binding in a given LUKS device.
-    Return <result> <error> """
+    """Create a clevis binding in a given LUKS device.
+    Return <result> <error>"""
 
     for req in ["device", "slot", "auth", "auth_cfg"]:
         if req not in kwargs:
@@ -1221,8 +1224,8 @@ def bind_slot(module, **kwargs):
 
 
 def decode_jwe(module, jwe):
-    """ Decodes a JWE into its JSON form.
-    Return <JSON policy> <error> """
+    """Decodes a JWE into its JSON form.
+    Return <JSON policy> <error>"""
 
     args = ["jose", "jwe", "fmt", "--input=-"]
     ret, coded, _ = module.run_command(args, data=jwe, binary_data=True)
@@ -1247,8 +1250,8 @@ def decode_jwe(module, jwe):
 
 
 def decode_pin_tang(module, json_jwe, keys):
-    """ Decode a tang pin JWE.
-    Return <tang (pin)> <tang config> <keys> <error> """
+    """Decode a tang pin JWE.
+    Return <tang (pin)> <tang config> <keys> <error>"""
 
     if "url" not in json_jwe:
         return None, None, {}, {"msg": "Invalid tang config: no url"}
@@ -1268,8 +1271,8 @@ def decode_pin_tang(module, json_jwe, keys):
 
 
 def decode_pin_tpm2(_module, json_jwe, keys):
-    """ Decode a tpm2 pin JWE.
-    Return <tpm2 (pin)> <tpm2 config> <keys> <error> """
+    """Decode a tpm2 pin JWE.
+    Return <tpm2 (pin)> <tpm2 config> <keys> <error>"""
 
     pin = {}
     tpm2_keys = ["hash", "key", "pcr_bank", "pcr_ids", "pcr_digest"]
@@ -1281,8 +1284,8 @@ def decode_pin_tpm2(_module, json_jwe, keys):
 
 
 def process_pin_sss(module, json_jwe, threshold, keys):
-    """ Process an sss pin.
-    Return <sss (pin)> <sss config> <keys> <error> """
+    """Process an sss pin.
+    Return <sss (pin)> <sss config> <keys> <error>"""
 
     pin_cfg = {}
     for coded in json_jwe["jwe"]:
@@ -1305,8 +1308,8 @@ def process_pin_sss(module, json_jwe, threshold, keys):
 
 
 def decode_pin_sss(module, json_jwe, keys):
-    """ Decode an sss pin JWE.
-    Return <sss (pin)> <sss config> <keys> <error> """
+    """Decode an sss pin JWE.
+    Return <sss (pin)> <sss config> <keys> <error>"""
 
     if "t" not in json_jwe:
         return None, None, {}, {"msg": "Invalid sss config: no threshold"}
@@ -1316,9 +1319,9 @@ def decode_pin_sss(module, json_jwe, keys):
 
 
 def decode_pin_config(module, jwe):
-    """ Retrieves the configuration used for the binding represented by the
+    """Retrieves the configuration used for the binding represented by the
     JWE passed as argument.
-    Return <pin> <policy> <keys> <error> """
+    Return <pin> <policy> <keys> <error>"""
 
     jwe_json, err = decode_jwe(module, jwe)
     if err:
@@ -1345,9 +1348,9 @@ def decode_pin_config(module, jwe):
 
 
 def already_bound(module, **kwargs):
-    """ Checks whether there is already a valid/working binding with the same
+    """Checks whether there is already a valid/working binding with the same
     configuration as the one we would otherwise add.
-    Return <result> """
+    Return <result>"""
 
     device = kwargs["device"]
     slot = kwargs["slot"]
@@ -1391,8 +1394,8 @@ def already_bound(module, **kwargs):
 
 
 def bindings_sanity_check(bindings, data_dir, check_mode):
-    """ Performs sanity-checking on the bindings list and related arguments.
-    Return: <bindings> <error> """
+    """Performs sanity-checking on the bindings list and related arguments.
+    Return: <bindings> <error>"""
 
     # bindings is a list of the following:
     # {
@@ -1454,8 +1457,8 @@ def bindings_sanity_check(bindings, data_dir, check_mode):
 
 
 def process_bind_operation(module, binding):
-    """ Process an operation to add a binding to an encrypted device.
-    Return: <changed (boolean)> <err> """
+    """Process an operation to add a binding to an encrypted device.
+    Return: <changed (boolean)> <err>"""
 
     auth_name, cfg, cfg_keys, err = generate_config(
         module, binding["servers"], binding["threshold"]
@@ -1494,8 +1497,8 @@ def process_bind_operation(module, binding):
 
 
 def process_bindings(module, bindings):
-    """ Process the list of bindings and performs the appropriate operations.
-    Return: <result> """
+    """Process the list of bindings and performs the appropriate operations.
+    Return: <result>"""
 
     original_bindings = bindings
     result = {"changed": False, "original_bindings": bindings}
@@ -1532,7 +1535,7 @@ def process_bindings(module, bindings):
 
 
 def run_module():
-    """ The entry point of the module. """
+    """The entry point of the module."""
 
     module_args = dict(
         bindings=dict(type="list", required=False),
@@ -1557,7 +1560,7 @@ def run_module():
 
 
 def main():
-    """ The main function! """
+    """The main function!"""
     run_module()
 
 
