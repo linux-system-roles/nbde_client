@@ -13,6 +13,7 @@ galaxy_info:
       versions:
         - 31
         - 32
+        - 33
     - name: EL
       versions:
         - 7
