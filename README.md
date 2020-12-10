@@ -1,5 +1,6 @@
 nbde_client
 -----------
+![CI Testing](https://github.com/linux-system-roles/nbde_client/workflows/tox/badge.svg)
 
 Ansible role for configuring Network-Bound Disk Encryption clients (e.g. clevis).
 
