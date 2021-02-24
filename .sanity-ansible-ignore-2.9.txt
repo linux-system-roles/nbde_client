@@ -1,0 +1,3 @@
+plugins/modules/nbde_client_clevis.py pylint:blacklisted-name
+plugins/modules/nbde_client_clevis.py pylint:ansible-format-automatic-specification
+plugins/modules/nbde_client_clevis.py validate-modules!skip
