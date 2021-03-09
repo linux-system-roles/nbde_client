@@ -17,6 +17,10 @@
       paths:
         - "{{ playbook_dir }}/vars"
 
+- name: Print all available facts
+  debug:
+    var: ansible_facts
+
 - name: Install required packages for nbde_client tests
   package:
     name: "{{ nbde_client_test_packages }}"
