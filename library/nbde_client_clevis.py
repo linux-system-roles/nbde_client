@@ -36,46 +36,61 @@ module: nbde_client_clevis
 short_description: Handle clevis-related operations on LUKS devices
 version_added: "2.9"
 description:
-    - >
+    - "WARNING: Do not use this module directly! It is only for role internal use."
+    - |
       "Module manages clevis bindings on encrypted devices to match the state
-      specified in input parameters.
+      specified in input parameters."
 options:
     bindings:
-        description: >
-              a list of dictionaries that describe a binding that should be
-              either added or removed from a given device/slot. It supports
-              the following keys:
-              - >
-                device: the path of the underlying encrypted device. This
-                device must be already configured as a LUKS device before
-                using the module (REQUIRED)
-              - >
-                encryption_password: a valid password or passphrase for
-                opening/unlocking the specified device
-              - >
-                encryption_key: a key file on the managed node valid for
-                opening/unlocking the specified device. When present, the key
-                file should be located at data_dir
-              - >
-                encryption_key_src: a key file on the control node valid for
-                opening/unlocking the specified device.  This was copied to
-                data_dir.  This will be used if encryption_key is not specified.
-              - >
-                state: either present/absent, to indicate whether the binding
-                described should be added or removed
-              - slot: the slot to use for the binding
-              - servers: the list of servers to bind to
-              - >
-                threshold: the threshold for the the Shamir Secret Sharing
-                (SSS) scheme that is put in place when using more than one
-                server
-              - >
-                password_temporary: if yes, the password or passphrase that was
-                provided via the encryption_password or encryption_key file arguments
-                will be used to unlock the encrypted device and then it will be removed
-                from the LUKS device after the binding operation completes, i.e., it
-                will not be valid anymore.
+        description: |
+            a list of dictionaries that describe a binding that should be
+            either added or removed from a given device/slot. It supports
+            the following keys:
+        type: list
+        element: dict
         required: true
+        suboptions:
+            device:
+                description:
+                    - the path of the underlying encrypted device. This
+                      device must be already configured as a LUKS device before
+                      using the module (REQUIRED)
+            encryption_password:
+                description:
+                    - a valid password or passphrase for
+                      opening/unlocking the specified device
+            encryption_key:
+                description:
+                    - a key file on the managed node valid for
+                      opening/unlocking the specified device. When present,
+                      the key file should be located at data_dir
+            encryption_key_src:
+                description:
+                    - a key file on the control node valid for
+                      opening/unlocking the specified device.  This was copied to
+                      data_dir.  This will be used if encryption_key is not specified.
+            state:
+                description:
+                    - either present/absent, to indicate whether the binding
+                      described should be added or removed
+            slot:
+                description:
+                    - the slot to use for the binding
+            servers:
+                description:
+                    - the list of servers to bind to
+            threshold:
+                description:
+                    - the threshold for the the Shamir Secret Sharing
+                      (SSS) scheme that is put in place when using more than one
+                      server
+            password_temporary:
+                description:
+                    - if yes, the password or passphrase that was
+                      provided via the encryption_password or encryption_key file arguments
+                      will be used to unlock the encrypted device and then it will be removed
+                      from the LUKS device after the binding operation completes, i.e., it
+                      will not be valid anymore.
     data_dir:
         description:
             - a directory used to store temporary files like encryption_key files
