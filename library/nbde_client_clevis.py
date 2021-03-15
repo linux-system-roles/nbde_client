@@ -37,8 +37,7 @@ short_description: Handle clevis-related operations on LUKS devices
 version_added: "2.9"
 description:
     - "WARNING: Do not use this module directly! It is only for role internal use."
-    - |
-      "Module manages clevis bindings on encrypted devices to match the state
+    - "Module manages clevis bindings on encrypted devices to match the state
       specified in input parameters."
 options:
     bindings:
