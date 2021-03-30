@@ -6,7 +6,8 @@
     - block:
         - import_role:
             name: linux-system-roles.nbde_client
-        - assert:
+        - name: Assert that the role declares all parameters in defaults
+          assert:
             that: "{{ item }} is defined"
           loop:
             - nbde_client_provider

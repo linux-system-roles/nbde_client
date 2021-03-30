@@ -37,7 +37,8 @@
   changed_when: false
 
 - name: Format test device as LUKS
-  shell: >
+  shell: >-
+    set -euo pipefail;
     echo -n {{ nbde_client_test_pass }} |
     cryptsetup luksFormat --pbkdf pbkdf2 --pbkdf-force-iterations 1000
     --batch-mode --force-password {{ nbde_client_test_device }}
