@@ -35,6 +35,7 @@
           copy:
             src: "{{ nbde_client_test_encryption_key_src }}"
             dest: "{{ nbde_client_test_encryption_key_src }}"
+            mode: preserve
 
         - name: Attempt to check whether default key file works
           include_tasks: tasks/verify_default_key_file.yml
