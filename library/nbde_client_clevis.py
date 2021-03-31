@@ -10,26 +10,6 @@ from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
-import os.path
-import json
-import re
-
-try:
-    from shlex import quote as cmd_quote
-except ImportError:
-    from pipes import quote as cmd_quote
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
-
-
-ANSIBLE_METADATA = {
-    "metadata_version": "0.1",
-    "status": ["preview"],
-    "supported_by": "community",
-}
-
-
 DOCUMENTATION = """
 ---
 module: nbde_client_clevis
@@ -46,7 +26,6 @@ options:
             either added or removed from a given device/slot. It supports
             the following keys:
         type: list
-        element: dict
         required: true
         suboptions:
             device:
@@ -94,6 +73,7 @@ options:
         description:
             - a directory used to store temporary files like encryption_key files
         required: false
+        type: str
 author:
     - Sergio Correia (@sergio-correia)
 """
@@ -130,6 +110,26 @@ msg:
 """
 
 
+import os.path
+import json
+import re
+
+try:
+    from shlex import quote as cmd_quote
+except ImportError:
+    from pipes import quote as cmd_quote
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+
+
+ANSIBLE_METADATA = {
+    "metadata_version": "0.1",
+    "status": ["preview"],
+    "supported_by": "community",
+}
+
+
 # The UUID used in LUKSMeta by clevis.
 CLEVIS_UUID = "cb6e8904-81ff-40da-a84a-07ab9ab5715e"
 
@@ -144,12 +144,12 @@ def initialize_device(module, luks_type, device):
 
     if luks_type == "luks1":
         args = ["luksmeta", "test", "-d", device]
-        ret, _, err = module.run_command(args)
+        ret, _unused, err = module.run_command(args)
         if ret == 0:
             return None
 
         args = ["luksmeta", "init", "-f", "-d", device]
-        ret, _, err = module.run_command(args)
+        ret, _unused, err = module.run_command(args)
         if ret != 0:
             return {"msg": err}
 
@@ -161,14 +161,14 @@ def get_luks_type(module, device, initialize=True):
     Return: <luks type> <error>"""
 
     args = ["cryptsetup", "isLuks", device]
-    ret_code, _, stderr = module.run_command(args)
+    ret_code, _unused, stderr = module.run_command(args)
     if ret_code != 0:
         return None, {"msg": stderr}
 
     # Now let's identify the LUKS type.
     for luks in ["luks1", "luks2"]:
         args = ["cryptsetup", "isLuks", "--type", luks, device]
-        ret_code, _, _ = module.run_command(args)
+        ret_code, _unused1, _unused2 = module.run_command(args)
         if ret_code == 0:
             err = None
             if initialize:
@@ -192,10 +192,10 @@ def get_jwe_luks1(module, device, slot):
     # 0   active empty
     # 1   active cb6e8904-81ff-40da-a84a-07ab9ab5715e
     # 2 inactive empty
-    pattern = r"^{}\s+active\s+(\S+)$".format(slot)
+    pattern = r"^{0}\s+active\s+(\S+)$".format(slot)
     match = re.search(pattern, stdout, re.MULTILINE)
     if not match or (match.groups()[0] != CLEVIS_UUID):
-        errmsg = "get_jwe_luks1: {}:{} not clevis-bound".format(device, slot)
+        errmsg = "get_jwe_luks1: {0}:{1} not clevis-bound".format(device, slot)
         return None, {"msg": errmsg}
 
     args = ["luksmeta", "load", "-d", device, "-s", str(slot)]
@@ -213,10 +213,10 @@ def get_jwe_from_luks2_token(module, token):
     args = ["jose", "fmt", "--json", token, "--object", "--get", "jwe", "--output=-"]
     ret, jwe_obj, err = module.run_command(args)
     if ret != 0:
-        return None, {"msg": "get_jwe_from_luks2_token: {}".format(err)}
+        return None, {"msg": "get_jwe_from_luks2_token: {0}".format(err)}
     jwe, err = format_jwe(module, jwe_obj, True)
     if err:
-        return None, {"msg": "get_jwe_from_luks2_token: {}".format(err["msg"])}
+        return None, {"msg": "get_jwe_from_luks2_token: {0}".format(err["msg"])}
     return jwe, None
 
 
@@ -227,31 +227,31 @@ def get_jwe_luks2(module, device, slot):
     args = ["cryptsetup", "luksDump", device]
     ret_code, stdout, stderr = module.run_command(args)
     if ret_code != 0:
-        return None, None, {"msg": "get_jwe_luks2: {}".format(stderr)}
+        return None, None, {"msg": "get_jwe_luks2: {0}".format(stderr)}
 
     # This is the pattern we are looking for:
     # Tokens:
     #  0: clevis
     #        Keyslot:  1
     # Digests:
-    pattern = r"^Tokens:$.*^\s+(\d+):\s+clevis$\s+Keyslot:\s+{}$.*^Digests:$".format(
+    pattern = r"^Tokens:$.*^\s+(\d+):\s+clevis$\s+Keyslot:\s+{0}$.*^Digests:$".format(
         slot
     )
 
     match = re.search(pattern, stdout, re.MULTILINE | re.DOTALL)
     if not match:
-        errmsg = "get_jwe_luks2: {}:{} not clevis-bound".format(device, slot)
+        errmsg = "get_jwe_luks2: {0}:{1} not clevis-bound".format(device, slot)
         return None, None, {"msg": errmsg}
 
     token_id = match.groups()[0]
     args = ["cryptsetup", "token", "export", "--token-id", token_id, device]
     ret, token, err = module.run_command(args)
     if ret != 0:
-        return None, None, {"msg": "get_jwe_luks2: {}".format(err)}
+        return None, None, {"msg": "get_jwe_luks2: {0}".format(err)}
 
     jwe, err = get_jwe_from_luks2_token(module, token)
     if err:
-        return None, None, {"msg": "get_jwe_luks2: {}".format(err["msg"])}
+        return None, None, {"msg": "get_jwe_luks2: {0}".format(err["msg"])}
     return jwe, token_id, None
 
 
@@ -265,7 +265,7 @@ def get_jwe(module, device, slot, initialize=True):
 
     if luks == "luks1":
         return get_jwe_luks1(module, device, slot)
-    jwe, _, err = get_jwe_luks2(module, device, slot)
+    jwe, _unused, err = get_jwe_luks2(module, device, slot)
     return jwe, err
 
 
@@ -273,7 +273,7 @@ def is_slot_bound(module, device, slot):
     """Checks whether a specific slot in a given device is bound to clevis.
     Return: <boolean> <error>"""
 
-    _, err = get_jwe(module, device, slot)
+    _unused, err = get_jwe(module, device, slot)
     if err:
         return False, err
     return True, None
@@ -286,10 +286,10 @@ def download_adv(module, server):
     url = server
     # Add http:// prefix, if missing.
     if not url.startswith("http"):
-        url = format("http://{}".format(url))
+        url = format("http://{0}".format(url))
 
     # Add the /adv suffix.
-    url = format("{}/adv".format(url))
+    url = format("{0}/adv".format(url))
 
     response, info = fetch_url(module, url, method="get")
     if info["status"] != 200:
@@ -308,9 +308,9 @@ def get_thumbprint(module, key):
     Return <thumbprint> <error>"""
 
     args = ["jose", "jwk", "thp", "--input=-"]
-    ret, thp, _ = module.run_command(args, data=key, binary_data=True)
+    ret, thp, _unused = module.run_command(args, data=key, binary_data=True)
     if ret != 0:
-        return None, {"msg": "Error getting thumbprint of {}".format(key)}
+        return None, {"msg": "Error getting thumbprint of {0}".format(key)}
     return thp, None
 
 
@@ -336,7 +336,9 @@ def keys_from_adv(module, adv):
         "keys",
         "--output=-",
     ]
-    ret, adv_keys_str, _ = module.run_command(args, data=adv_str, binary_data=True)
+    ret, adv_keys_str, _unused = module.run_command(
+        args, data=adv_str, binary_data=True
+    )
     if ret != 0:
         return keys
 
@@ -455,7 +457,7 @@ def bound_slots(module, device):
     # Now let's iterate through these slots and collect the bound ones.
     bound = []
     for slot in slots:
-        _, err = is_slot_bound(module, device, slot)
+        _unused, err = is_slot_bound(module, device, slot)
         if err:
             continue
         bound.append(slot)
@@ -486,7 +488,7 @@ def run_cryptsetup(module, args, **kwargs):
         # No passphrase required, just run the command.
         ret, out, err = module.run_command(args, data=data, binary_data=True)
         if ret != 0:
-            errmsg = "Command {} failed: {}".format(" ".join(args), err)
+            errmsg = "Command {0} failed: {1}".format(" ".join(args), err)
             return None, {"msg": errmsg}
         return out, None
 
@@ -496,7 +498,7 @@ def run_cryptsetup(module, args, **kwargs):
         args.extend(["--key-file", passphrase])
         ret, out, err = module.run_command(args, data=data, binary_data=True)
         if ret != 0:
-            errmsg = "Command {} failed: {}".format(" ".join(args), err)
+            errmsg = "Command {0} failed: {1}".format(" ".join(args), err)
             return None, {"msg": errmsg}
         return out, None
 
@@ -504,11 +506,11 @@ def run_cryptsetup(module, args, **kwargs):
     if data is None:
         data = passphrase
     else:
-        data = "{}\n{}".format(passphrase, data)
+        data = "{0}\n{1}".format(passphrase, data)
 
     ret, out, err = module.run_command(args, data=data, binary_data=True)
     if ret != 0:
-        errmsg = "Command {} failed: {}".format(" ".join(args), err)
+        errmsg = "Command {0} failed: {1}".format(" ".join(args), err)
         return None, {"msg": errmsg}
     return out, None
 
@@ -519,7 +521,7 @@ def valid_passphrase(module, **kwargs):
 
     for req in ["device", "passphrase"]:
         if req not in kwargs or kwargs[req] is None:
-            errmsg = "valid_passphrase: {} is a required parameter".format(req)
+            errmsg = "valid_passphrase: {0} is a required parameter".format(req)
             return False, {"msg": errmsg}
 
     is_keyfile = kwargs.get("is_keyfile", False)
@@ -529,11 +531,11 @@ def valid_passphrase(module, **kwargs):
     if slot is not None:
         args.extend(["--key-slot", str(slot)])
 
-    _, err = run_cryptsetup(
+    _unused, err = run_cryptsetup(
         module, args, passphrase=kwargs["passphrase"], is_keyfile=is_keyfile
     )
     if err:
-        errmsg = "valid_passphrase: We need a valid passphrase for {}".format(
+        errmsg = "valid_passphrase: We need a valid passphrase for {0}".format(
             kwargs["device"]
         )
         return False, {"msg": errmsg, "err": err}
@@ -557,7 +559,7 @@ def retrieve_passphrase(module, device):
         if err:
             continue
 
-        _, err = valid_passphrase(module, device=device, passphrase=decrypted)
+        _unused, err = valid_passphrase(module, device=device, passphrase=decrypted)
         if err:
             continue
         return slot, decrypted, None
@@ -572,12 +574,12 @@ def save_slot_luks1(module, **kwargs):
 
     for req in ["device", "slot", "data", "overwrite"]:
         if req not in kwargs:
-            return False, {"msg": "{} is a required parameter".format(req)}
+            return False, {"msg": "{0} is a required parameter".format(req)}
 
     if len(kwargs["data"]) == 0:
         return False, {"msg": "We need data to save to a slot"}
 
-    bound, _ = is_slot_bound(module, kwargs["device"], kwargs["slot"])
+    bound, _unused = is_slot_bound(module, kwargs["device"], kwargs["slot"])
 
     backup, err = backup_luks1_device(module, kwargs["device"])
     if err:
@@ -585,7 +587,7 @@ def save_slot_luks1(module, **kwargs):
 
     if bound:
         if not kwargs["overwrite"]:
-            errmsg = "{}:{} is already bound and no overwrite set".format(
+            errmsg = "{0}:{1} is already bound and no overwrite set".format(
                 kwargs["device"], kwargs["slot"]
             )
             return False, {"msg": errmsg}
@@ -600,7 +602,7 @@ def save_slot_luks1(module, **kwargs):
             "-u",
             CLEVIS_UUID,
         ]
-        ret_code, _, stderr = module.run_command(args, binary_data=True)
+        ret_code, _unused, stderr = module.run_command(args, binary_data=True)
         if ret_code != 0:
             return False, {"msg": stderr}
 
@@ -614,7 +616,7 @@ def save_slot_luks1(module, **kwargs):
         "-u",
         CLEVIS_UUID,
     ]
-    ret_code, _, stderr = module.run_command(
+    ret_code, _unused, stderr = module.run_command(
         args, data=kwargs["data"], binary_data=True
     )
     if ret_code != 0:
@@ -626,7 +628,7 @@ def save_slot_luks1(module, **kwargs):
     new_data, err = get_jwe_luks1(module, kwargs["device"], kwargs["slot"])
     if err or new_data != kwargs["data"]:
         restore_luks1_device(module, kwargs["device"], backup)
-        errmsg = "Error adding JWE to {}:{} ; no changes performed".format(
+        errmsg = "Error adding JWE to {0}:{1} ; no changes performed".format(
             kwargs["device"], kwargs["slot"]
         )
         return False, {"msg": errmsg}
@@ -658,12 +660,12 @@ def restore_luks1_device(module, device, backup):
     Return: <error>"""
 
     args = ["luksmeta", "init", "-f", "-d", device]
-    ret_code, _, stderr = module.run_command(args)
+    ret_code, _unused, stderr = module.run_command(args)
     if ret_code != 0:
         return {"msg": stderr}
 
     for slot in backup:
-        _, err = save_slot_luks1(
+        _unused, err = save_slot_luks1(
             module, device=device, slot=slot, data=backup[slot], overwrite=True
         )
         if err:
@@ -679,7 +681,7 @@ def backup_luks2_token(module, device, token_id):
     args = ["cryptsetup", "token", "export", "--token-id", token_id, device]
     ret, token, err = module.run_command(args)
     if ret != 0:
-        return None, {"msg": "Error during token backup: {}".format(err)}
+        return None, {"msg": "Error during token backup: {0}".format(err)}
 
     try:
         token_json = json.loads(token)
@@ -701,9 +703,9 @@ def import_luks2_token(module, device, token):
     except ValueError as exc:
         return {"msg": str(exc)}
 
-    ret, _, err = module.run_command(args, data=token_str, binary_data=True)
+    ret, _unused, err = module.run_command(args, data=token_str, binary_data=True)
     if ret != 0:
-        errmsg = "Error importing token: {}, token: {}".format(err, token)
+        errmsg = "Error importing token: {0}, token: {1}".format(err, token)
         return {"msg": errmsg}
     return None
 
@@ -715,7 +717,7 @@ def make_luks2_token(slot, data):
     try:
         metadata = {"type": "clevis", "keyslots": [str(slot)], "jwe": json.loads(data)}
     except ValueError as exc:
-        return False, {"msg": "Error making new token: {}".format(str(exc))}
+        return False, {"msg": "Error making new token: {0}".format(str(exc))}
 
     return metadata, None
 
@@ -740,7 +742,7 @@ def save_slot_luks2(module, **kwargs):
 
     for req in ["device", "slot", "data", "overwrite"]:
         if req not in kwargs:
-            return False, {"msg": "{} is a required parameter".format(req)}
+            return False, {"msg": "{0} is a required parameter".format(req)}
 
     if len(kwargs["data"]) == 0:
         return False, {"msg": "We need data to save to a slot"}
@@ -749,7 +751,7 @@ def save_slot_luks2(module, **kwargs):
 
     if not err:
         if not kwargs["overwrite"]:
-            errmsg = "{}:{} is already bound and no overwrite set".format(
+            errmsg = "{0}:{1} is already bound and no overwrite set".format(
                 kwargs["device"], kwargs["slot"]
             )
             return False, {"msg": errmsg}
@@ -766,14 +768,14 @@ def save_slot_luks2(module, **kwargs):
             token_id,
             kwargs["device"],
         ]
-        ret_code, _, err = module.run_command(args)
+        ret_code, _unused, err = module.run_command(args)
         if ret_code != 0:
-            return False, {"msg": "Error removing token: {}".format(err)}
+            return False, {"msg": "Error removing token: {0}".format(err)}
 
     jwe, err = format_jwe(module, kwargs["data"], False)
     if err:
         import_luks2_token(module, kwargs["device"], old_data)
-        return False, {"msg": "Error preparing JWE: {}".format(err["msg"])}
+        return False, {"msg": "Error preparing JWE: {0}".format(err["msg"])}
 
     token, err = make_luks2_token(kwargs["slot"], jwe)
     if err:
@@ -788,7 +790,7 @@ def save_slot_luks2(module, **kwargs):
     metadata, token_id, err = get_jwe_luks2(module, kwargs["device"], kwargs["slot"])
     # get_jwe_luks2 returns the compact version of the data, so let's get it as
     # well for comparison, to see if we have the same data.
-    jwe, _ = format_jwe(module, kwargs["data"], True)
+    jwe, _unused = format_jwe(module, kwargs["data"], True)
     if err or metadata != jwe:
         # For some reason, what we read was not what we expect.
         # Undo the change.
@@ -803,7 +805,7 @@ def save_slot_luks2(module, **kwargs):
         module.run_command(args)
 
         import_luks2_token(module, kwargs["device"], old_data)
-        errmsg = "Error storing token: {} / {}".format(kwargs["data"], metadata)
+        errmsg = "Error storing token: {0} / {1}".format(kwargs["data"], metadata)
         return False, {"msg": errmsg}
 
     return True, None
@@ -815,7 +817,7 @@ def save_slot(module, **kwargs):
 
     for req in ["device", "slot", "data", "overwrite"]:
         if req not in kwargs:
-            return False, {"msg": "{} is a required parameter".format(req)}
+            return False, {"msg": "{0} is a required parameter".format(req)}
 
     luks, err = get_luks_type(module, kwargs["device"])
     if err:
@@ -843,12 +845,12 @@ def set_passphrase(module, **kwargs):
 
     for req in ["device", "slot", "valid_passphrase", "new_passphrase"]:
         if req not in kwargs:
-            return False, {"msg": "{} is a required parameter".format(req)}
+            return False, {"msg": "{0} is a required parameter".format(req)}
 
     is_keyfile = kwargs.get("is_keyfile", False)
 
     # Make sure we actually have a valid password for this device.
-    _, err = valid_passphrase(
+    _unused, err = valid_passphrase(
         module,
         device=kwargs["device"],
         passphrase=kwargs["valid_passphrase"],
@@ -856,12 +858,12 @@ def set_passphrase(module, **kwargs):
     )
 
     if err:
-        errmsg = "We need a valid passphrase for {}".format(kwargs["device"])
+        errmsg = "We need a valid passphrase for {0}".format(kwargs["device"])
         return False, {"msg": errmsg}
 
     # Now let's identify whether this is an in-place change, i.e., if
     # the valid passphrase we have is for the slot we are replacing.
-    _, err = valid_passphrase(
+    _unused, err = valid_passphrase(
         module,
         device=kwargs["device"],
         passphrase=kwargs["valid_passphrase"],
@@ -880,7 +882,7 @@ def set_passphrase(module, **kwargs):
             "--batch-mode",
             "--force-password",
         ]
-        _, err = run_cryptsetup(
+        _unused, err = run_cryptsetup(
             module,
             args,
             passphrase=kwargs["valid_passphrase"],
@@ -918,7 +920,7 @@ def set_passphrase(module, **kwargs):
     )
 
     for args in cmds:
-        _, err = run_cryptsetup(
+        _unused, err = run_cryptsetup(
             module,
             args,
             passphrase=kwargs["valid_passphrase"],
@@ -935,9 +937,9 @@ def unbind_slot_luks1(module, device, slot):
     """Unbind slot in a LUKS1 device. This involves removing both the clevis
     metadata in LUKSMeta as well as its associated keyslot.
     Return <result> <error>"""
-    _, err = get_jwe_luks1(module, device, slot)
+    _unused, err = get_jwe_luks1(module, device, slot)
     if err:
-        errmsg = "{}:{} is not bound to clevis".format(device, slot)
+        errmsg = "{0}:{1} is not bound to clevis".format(device, slot)
         return False, {"msg": errmsg}
 
     cmds = []
@@ -947,7 +949,7 @@ def unbind_slot_luks1(module, device, slot):
     )
 
     for args in cmds:
-        ret, _, err = module.run_command(args)
+        ret, _unused, err = module.run_command(args)
         if ret != 0:
             return False, {"msg": err}
     return True, None
@@ -957,9 +959,9 @@ def unbind_slot_luks2(module, device, slot):
     """Unbind slot in a LUKS2 device. This involves removing both the clevis
     metadata as well as its associated keyslot.
     Return <result> <error>"""
-    _, token_id, err = get_jwe_luks2(module, device, slot)
+    _unused, token_id, err = get_jwe_luks2(module, device, slot)
     if err:
-        errmsg = "{}:{} is not bound to clevis".format(device, slot)
+        errmsg = "{0}:{1} is not bound to clevis".format(device, slot)
         return False, {"msg": errmsg}
 
     cmds = []
@@ -967,7 +969,7 @@ def unbind_slot_luks2(module, device, slot):
     cmds.append(["cryptsetup", "token", "remove", "--token-id", token_id, device])
 
     for args in cmds:
-        ret, _, err = module.run_command(args)
+        ret, _unused, err = module.run_command(args)
         if ret != 0:
             return False, {"msg": err}
     return True, None
@@ -1006,7 +1008,7 @@ def new_key(module, device):
 
     match = re.search(pattern, luks_dump, re.MULTILINE)
     if not match:
-        errmsg = "new_key: Unable to find entropy bits for {}".format(device)
+        errmsg = "new_key: Unable to find entropy bits for {0}".format(device)
         return None, {"msg": errmsg}
     bits = match.groups()[0]
     args = ["pwmake", bits]
@@ -1044,13 +1046,13 @@ def can_bind_slot(module, device, slot, overwrite):
     Return <result> <error>"""
 
     # Check if valid LUKS device.
-    _, err = get_luks_type(module, device)
+    _unused, err = get_luks_type(module, device)
     if err:
         return False, err
 
-    bound, _ = is_slot_bound(module, device, slot)
+    bound, _unused = is_slot_bound(module, device, slot)
     if bound and not overwrite:
-        errmsg = "{}:{} is already bound and no overwrite set".format(device, slot)
+        errmsg = "{0}:{1} is already bound and no overwrite set".format(device, slot)
         return False, {"msg": errmsg}
 
     # Still need to check whether this slot is not already in use.
@@ -1070,7 +1072,7 @@ def discard_passphrase(module, **kwargs):
 
     for req in ["device", "passphrase"]:
         if req not in kwargs:
-            return False, {"msg": "{} is a required parameter".format(req)}
+            return False, {"msg": "{0} is a required parameter".format(req)}
 
     passphrase = kwargs["passphrase"]
     args = ["cryptsetup", "luksRemoveKey", "--batch-mode", kwargs["device"]]
@@ -1078,9 +1080,9 @@ def discard_passphrase(module, **kwargs):
     if is_keyfile:
         args.append(passphrase)
         passphrase = None
-    ret, _, err = module.run_command(args, data=passphrase, binary_data=True)
+    ret, _unused, err = module.run_command(args, data=passphrase, binary_data=True)
     if ret != 0:
-        return False, {"msg": "Error removing passphrase: {}".format(err)}
+        return False, {"msg": "Error removing passphrase: {0}".format(err)}
     return True, None
 
 
@@ -1109,7 +1111,7 @@ def prepare_to_rebind(module, device, slot):
             CLEVIS_UUID,
         ]
     else:
-        _, token_id, err = get_jwe_luks2(module, device, slot)
+        _unused, token_id, err = get_jwe_luks2(module, device, slot)
         if err:
             return err
         backup, err = backup_luks2_token(module, device, token_id)
@@ -1117,7 +1119,7 @@ def prepare_to_rebind(module, device, slot):
             return None, err
         args = ["cryptsetup", "token", "remove", "--token-id", token_id, device]
 
-    ret, _, err = module.run_command(args)
+    ret, _unused, err = module.run_command(args)
     if ret != 0:
         return None, {"msg": err}
     return backup, None
@@ -1146,7 +1148,7 @@ def get_valid_passphrase(module, **kwargs):
     is_keyfile = kwargs.get("is_keyfile", False)
 
     # Now let's check if we have a valid passphrase.
-    _, err = valid_passphrase(
+    _unused, err = valid_passphrase(
         module,
         device=kwargs["device"],
         passphrase=passphrase,
@@ -1166,7 +1168,7 @@ def get_valid_passphrase(module, **kwargs):
     # We either were not provided a passphrase, or it didn't prove to be valid,
     # but password_temporary was set.
     # Let's try to retrieve one from existing bindings, if possible.
-    _, passphrase, err = retrieve_passphrase(module, kwargs["device"])
+    _unused, passphrase, err = retrieve_passphrase(module, kwargs["device"])
     if err:
         return None, False, err
 
@@ -1181,11 +1183,11 @@ def bind_slot(module, **kwargs):
 
     for req in ["device", "slot", "auth", "auth_cfg"]:
         if req not in kwargs:
-            return False, {"msg": "{} is a required parameter".format(req)}
+            return False, {"msg": "{0} is a required parameter".format(req)}
 
     overwrite = kwargs.get("overwrite", True)
 
-    _, err = can_bind_slot(module, kwargs["device"], kwargs["slot"], overwrite)
+    _unused, err = can_bind_slot(module, kwargs["device"], kwargs["slot"], overwrite)
     if err:
         return False, err
 
@@ -1208,7 +1210,7 @@ def bind_slot(module, **kwargs):
     if err:
         return False, err
 
-    bound, _ = is_slot_bound(module, kwargs["device"], kwargs["slot"])
+    bound, _unused = is_slot_bound(module, kwargs["device"], kwargs["slot"])
 
     if bound:
         backup, err = prepare_to_rebind(module, kwargs["device"], kwargs["slot"])
@@ -1216,7 +1218,7 @@ def bind_slot(module, **kwargs):
             return False, err
 
     # We add the key first because it will be referenced by the metadata.
-    _, err = set_passphrase(
+    _unused, err = set_passphrase(
         module,
         device=kwargs["device"],
         slot=kwargs["slot"],
@@ -1230,7 +1232,7 @@ def bind_slot(module, **kwargs):
             restore_failed_rebind(module, kwargs["device"], backup)
         return False, err
 
-    _, err = save_slot(
+    _unused, err = save_slot(
         module, device=kwargs["device"], slot=kwargs["slot"], data=jwe, overwrite=True
     )
 
@@ -1254,17 +1256,17 @@ def decode_jwe(module, jwe):
     Return <JSON policy> <error>"""
 
     args = ["jose", "jwe", "fmt", "--input=-"]
-    ret, coded, _ = module.run_command(args, data=jwe, binary_data=True)
+    ret, coded, _unused = module.run_command(args, data=jwe, binary_data=True)
     if ret != 0:
         return None, {"msg": "Error applying jose jwe fmt to given JWE"}
 
     args = ["jose", "fmt", "--json=-", "--get", "protected", "--unquote=-"]
-    ret, coded, _ = module.run_command(args, data=coded, binary_data=True)
+    ret, coded, _unused = module.run_command(args, data=coded, binary_data=True)
     if ret != 0:
-        return None, {"msg": "Error applying jose fmt: {}".format(coded)}
+        return None, {"msg": "Error applying jose fmt: {0}".format(coded)}
 
     args = ["jose", "b64", "dec", "-i-"]
-    ret, decoded, _ = module.run_command(args, data=coded, binary_data=True)
+    ret, decoded, _unused = module.run_command(args, data=coded, binary_data=True)
     if ret != 0:
         return None, {"msg": "Error applying jose b64 dec"}
 
@@ -1367,7 +1369,7 @@ def decode_pin_config(module, jwe):
         "sss": decode_pin_sss,
     }
     if pin not in decode_method:
-        return None, None, {}, {"msg": "Unsupported pin '{}'".format(pin)}
+        return None, None, {}, {"msg": "Unsupported pin '{0}'".format(pin)}
 
     keys = {}
     return decode_method[pin](module, config, keys)
@@ -1392,7 +1394,9 @@ def already_bound(module, **kwargs):
         return False
 
     # Check #3 - verify whether the decrypted passphrase is valid.
-    _, err = valid_passphrase(module, device=device, passphrase=decrypted, slot=slot)
+    _unused, err = valid_passphrase(
+        module, device=device, passphrase=decrypted, slot=slot
+    )
     if err:
         return False
 
@@ -1402,7 +1406,7 @@ def already_bound(module, **kwargs):
     if kwargs["auth"] == "tang":
         original_policy.pop("adv", None)
     else:
-        for idx, _ in enumerate(original_policy["pins"]["tang"]):
+        for idx, _unused in enumerate(original_policy["pins"]["tang"]):
             original_policy["pins"]["tang"][idx].pop("adv", None)
 
     pin, policy, keys, err = decode_pin_config(module, jwe)
@@ -1515,7 +1519,7 @@ def process_bind_operation(module, binding):
     if module.check_mode:
         return True, None
 
-    _, err = bind_slot(module, **args)
+    _unused, err = bind_slot(module, **args)
     if err:
         return False, err
 
@@ -1531,7 +1535,7 @@ def process_bindings(module, bindings):
 
     for binding in bindings:
         if binding["state"] == "absent":
-            _, err = is_slot_bound(module, binding["device"], binding["slot"])
+            _unused, err = is_slot_bound(module, binding["device"], binding["slot"])
             if err:
                 # Slot not bound, moving on.
                 continue
@@ -1540,7 +1544,7 @@ def process_bindings(module, bindings):
                 result["changed"] = True
                 return result
 
-            _, err = unbind_slot(module, binding["device"], binding["slot"])
+            _unused, err = unbind_slot(module, binding["device"], binding["slot"])
             if err:
                 err["original_bindings"] = original_bindings
                 raise NbdeClientClevisError(err)
@@ -1592,5 +1596,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# vim:set ts=4 sw=4 et:
