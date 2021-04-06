@@ -32,7 +32,9 @@ These are the variables that can be passed to the role:
 
 
 #### nbde_client_bindings
+
 `nbde_client_bindings` is a list of dictionaries that support the following keys:
+
 | **Name** | **Default/Choices** | **Description** |
 |----------|-------------|------|
 | `device` | | specifies the path of the backing device of an encrypted device on the managed host. This device must be already configured as a LUKS device before using the role (**REQUIRED**). |
