@@ -483,12 +483,18 @@ def run_cryptsetup(module, args, **kwargs):
     is_keyfile = kwargs.get("is_keyfile", False)
     data = kwargs.get("data", None)
 
+    # In order to have extra information when there are failures, let's add
+    # --debug to the cryptsetup call here.
+    args.extend(["--debug"])
+
     # Let's check if this is a privileged operation.
     if passphrase is None:
         # No passphrase required, just run the command.
         ret, out, err = module.run_command(args, data=data, binary_data=True)
         if ret != 0:
-            errmsg = "Command {0} failed: {1}".format(" ".join(args), err)
+            errmsg = "Command {0} failed: STDOUT: {1} STDERR: {2}".format(
+                " ".join(args), out, err
+            )
             return None, {"msg": errmsg}
         return out, None
 
@@ -498,7 +504,9 @@ def run_cryptsetup(module, args, **kwargs):
         args.extend(["--key-file", passphrase])
         ret, out, err = module.run_command(args, data=data, binary_data=True)
         if ret != 0:
-            errmsg = "Command {0} failed: {1}".format(" ".join(args), err)
+            errmsg = "Command {0} failed: STDOUT: {1} STDERR: {2}".format(
+                " ".join(args), out, err
+            )
             return None, {"msg": errmsg}
         return out, None
 
@@ -510,7 +518,9 @@ def run_cryptsetup(module, args, **kwargs):
 
     ret, out, err = module.run_command(args, data=data, binary_data=True)
     if ret != 0:
-        errmsg = "Command {0} failed: {1}".format(" ".join(args), err)
+        errmsg = "Command {0} failed: STDOUT: {1} STDERR: {2}".format(
+            " ".join(args), out, err
+        )
         return None, {"msg": errmsg}
     return out, None
 
