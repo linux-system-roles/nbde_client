@@ -8,6 +8,7 @@ __nbde_client_packages:
   - clevis-luks
   - clevis-systemd
 
-__nbde_client_initramfs_update_cmd: dracut -f
+
+__nbde_client_initramfs_update_cmd: dracut -f --regenerate-all
 
 # vim:set ts=2 sw=2 et:
