@@ -4,6 +4,14 @@
     name: "{{ __nbde_client_packages }}"
     state: present
 
+- name: Update clevis dracut config to enable networking if Tang binding is found
+  lineinfile:
+    path: /etc/dracut.conf.d/clevis.conf
+    regexp: '^hostonly_cmdline='
+    line: 'hostonly_cmdline=yes'
+    state: present
+    create: yes
+
 - name: Check whether devices are at the desired state
   when:
     - nbde_client_bindings | default([])
