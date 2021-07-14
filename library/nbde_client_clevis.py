@@ -135,7 +135,7 @@ CLEVIS_UUID = "cb6e8904-81ff-40da-a84a-07ab9ab5715e"
 
 
 class NbdeClientClevisError(Exception):
-    """ The exceptions thrown by the module  """
+    """The exceptions thrown by the module"""
 
 
 def initialize_device(module, luks_type, device):
