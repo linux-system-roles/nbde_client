@@ -4,7 +4,7 @@
     name: "{{ __nbde_client_packages }}"
     state: present
 
-- name: Generate nbde_client dracut config 
+- name: Generate nbde_client dracut config
   template:
     src: nbde_client.conf
     dest: /etc/dracut.conf.d/nbde_client.conf
