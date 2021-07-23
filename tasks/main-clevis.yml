@@ -8,6 +8,8 @@
   template:
     src: nbde_client.conf
     dest: /etc/dracut.conf.d/nbde_client.conf
+    owner: root
+    mode: u=rw
 
 - name: Check whether devices are at the desired state
   when:
