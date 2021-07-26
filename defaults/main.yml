@@ -19,4 +19,9 @@ nbde_client_provider: clevis
 #        - http://server2.example.com
 nbde_client_bindings: []
 
+# Settings used configuring dracut 
+nbde_client_dracut_settings:
+  - kernel_cmdline="rd.neednet=1"
+  - ip="dhcp"
+
 # vim:set ts=2 sw=2 et:
