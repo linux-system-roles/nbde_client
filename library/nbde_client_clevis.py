@@ -26,7 +26,6 @@ options:
             either added or removed from a given device/slot. It supports
             the following keys:
         type: list
-        required: true
         suboptions:
             device:
                 description:
