@@ -4,5 +4,6 @@
 
 __nbde_client_packages: []
 __nbde_client_initramfs_update_cmd: ""
+__nbde_client_dracut_settings: []
 
 # vim:set ts=2 sw=2 et:

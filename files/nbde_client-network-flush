@@ -1,0 +1,9 @@
+#!/bin/sh
+
+for f in /sys/class/net/*; do
+  iface="${f##*/}"
+  [ "${iface}" = "lo" ] && continue
+  ip -statistics address flush dev "${iface}"
+done
+
+# vim:set ts=2 sw=2 et:
