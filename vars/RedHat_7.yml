@@ -7,7 +7,13 @@ __nbde_client_packages:
   - clevis-dracut
   - clevis-luks
   - clevis-systemd
+  - iproute
 
-__nbde_client_initramfs_update_cmd: dracut -f
+__nbde_client_initramfs_update_cmd: >
+  dracut -fv --regenerate-all
+
+__nbde_client_dracut_settings:
+  - kernel_cmdline="rd.neednet=1"
+  - omit_dracutmodules+="ifcfg"
 
 # vim:set ts=2 sw=2 et:

@@ -1,0 +1,10 @@
+[Unit]
+Description=Network flush service for nbde_client Ansible role
+Before=network-pre.target
+Wants=network-pre.target
+
+[Service]
+ExecStart=/usr/bin/nbde_client-network-flush
+
+[Install]
+WantedBy=default.target
