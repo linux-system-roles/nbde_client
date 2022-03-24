@@ -1,8 +1,13 @@
 #!/bin/sh
 
+# This script flushes every active network interface. It is intended to
+# run before NetworkManager starts, so that when it does it will be able
+# to set up the network using the regular host configuration.
+
 for f in /sys/class/net/*; do
   iface="${f##*/}"
   [ "${iface}" = "lo" ] && continue
+  echo "Preparing to flush interface ${iface}" >&2
   ip -statistics address flush dev "${iface}"
 done
 

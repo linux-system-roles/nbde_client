@@ -8,6 +8,7 @@ __nbde_client_packages:
   - clevis-luks
   - clevis-systemd
   - iproute
+  - NetworkManager
 
 __nbde_client_initramfs_update_cmd: >
   dracut -fv --regenerate-all
