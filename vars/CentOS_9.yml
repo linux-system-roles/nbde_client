@@ -14,6 +14,6 @@ __nbde_client_initramfs_update_cmd: >
 
 __nbde_client_dracut_settings:
   - kernel_cmdline="rd.neednet=1"
-  - omit_dracutmodules+="ifcfg"
+  - omit_dracutmodules+=" ifcfg "
 
 # vim:set ts=2 sw=2 et:
