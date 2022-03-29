@@ -82,6 +82,13 @@
         dest: /etc/systemd/system/nbde_client-network-flush.service
         mode: '0644'
 
+    - name: Deploy nbde_client dracut network flushing module
+      copy:
+        src: "{{ role_path }}/files/nbde_client/"
+        dest: /usr/lib/dracut/modules.d/60nbde_client/
+        directory_mode: '0755'
+        mode: '0644'
+
     - name: Reload systemd config
       systemd:
         daemon_reload: yes
