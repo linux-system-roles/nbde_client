@@ -5,7 +5,7 @@
 # the system network connections once the flush is performed and
 # the network configuration is applied to the system.
 disable_inird_connections() {
-  nmcli -t -f NAME connection show --active | while read -r _c; do
+  nmcli -t -f NAME connection show --active 2>/dev/null | while read -r _c; do
   if ! _enabled="$(nmcli -t connection show "${_c}" \
              | grep connection.autoconnect: \
              | cut -d: -f2)" || [ -z "${_enabled}" ]; then

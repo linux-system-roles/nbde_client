@@ -1,14 +1,37 @@
 #!/bin/sh
 
-# This script flushes every active network interface. It is intended to
+# do_flush() flushes every active network interface. It is intended to
 # run before NetworkManager starts, so that when it does it will be able
 # to set up the network using the regular host configuration.
+do_flush() {
+  for f in /sys/class/net/*; do
+    iface="${f##*/}"
+    [ "${iface}" = "lo" ] && continue
+    echo "Preparing to flush interface ${iface}" >&2
+    ip -statistics address flush dev "${iface}"
+  done
+}
 
-for f in /sys/class/net/*; do
-  iface="${f##*/}"
-  [ "${iface}" = "lo" ] && continue
-  echo "Preparing to flush interface ${iface}" >&2
-  ip -statistics address flush dev "${iface}"
-done
+# reset_autoconn_prio() will reset the autoconnect priority
+# of the existing NM connections to zero.
+reset_autoconn_prio() {
+  nmcli -t -f NAME connection show 2>/dev/null | while read -r _c; do
+    if ! _prio="$(nmcli -t connection show "${_c}" \
+           | grep connection.autoconnect-priority: \
+           | cut -d: -f2)" || [ -z "${_prio}" ]; then
+      continue
+    fi
+    [ "${_prio}" -ge 0 ] && continue
+    echo "Setting autoconnect-priority of connection ${_c} to zero" >&2
+    nmcli connection modify "${_c}" connection.autoconnect-priority 0
+  done
+}
+
+case "${1}" in
+reset-autoconn-prio)
+  reset_autoconn_prio;;
+flush)
+  do_flush;;
+esac
 
 # vim:set ts=2 sw=2 et:

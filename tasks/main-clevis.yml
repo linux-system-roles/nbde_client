@@ -89,6 +89,12 @@
         directory_mode: '0755'
         mode: '0644'
 
+    - name: Prepare for network flushing - reset autoconnect-priority
+      ansible.builtin.command:
+        cmd: /usr/bin/nbde_client-network-flush reset-autoconn-prio
+      register: __nbde_client_autoconn_prio
+      changed_when: __nbde_client_autoconn_prio.stderr
+
     - name: Reload systemd config
       systemd:
         daemon_reload: yes
