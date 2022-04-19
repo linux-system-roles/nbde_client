@@ -5,4 +5,11 @@
 # Mostly useful when debugging/testing.
 __nbde_client_update_initramfs: yes
 
+# ansible_facts required by the role
+__nbde_client_required_facts:
+  - distribution
+  - distribution_major_version
+  - distribution_version
+  - os_family
+
 # vim:set ts=2 sw=2 et:

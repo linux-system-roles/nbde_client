@@ -2,17 +2,7 @@
 ---
 # Set up internal variables.
 - name: Set version specific variables
-  include_vars: "{{ lookup('first_found', ffparams) }}"
-  vars:
-    ffparams:
-      files:
-        - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_version'] }}.yml"  # yamllint disable-line rule:line-length
-        - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_major_version'] }}.yml"  # yamllint disable-line rule:line-length
-        - "{{ ansible_facts['distribution'] }}.yml"
-        - "{{ ansible_facts['os_family'] }}.yml"
-        - "default.yml"
-      paths:
-        - "{{ role_path }}/vars"
+  include_tasks: set_vars.yml
 
 - name: Include the appropriate provider tasks
   include_tasks: "main-{{ nbde_client_provider }}.yml"
