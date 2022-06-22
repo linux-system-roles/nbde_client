@@ -2,6 +2,18 @@
 - name: Include general tests variables
   include_vars: main.yml
 
+- name: Ensure Ansible facts required by tests
+  setup:
+    gather_subset: min
+  when: not ansible_facts.keys() | list |
+    intersect(__test_required_facts) == __test_required_facts
+  vars:
+    __test_required_facts:
+      - distribution
+      - distribution_major_version
+      - distribution_version
+      - os_family
+
 - name: Set version specific variables
   include_vars: "{{ lookup('first_found', ffparams) }}"
   vars:
