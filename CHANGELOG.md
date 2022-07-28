@@ -1,6 +1,32 @@
 Changelog
 =========
 
+[1.2.6] - 2022-07-28
+--------------------
+
+### New Features
+
+- none
+
+### Bug Fixes
+
+- Sets needed spacing for appended rd.neednet parameter (#68)
+
+* Sets proper spacing for parameter rd.neednet=1 so that it is correctly appended to kernel cmdline, changes = to += for adding rd.neednet parameter
+
+### Other Changes
+
+- changelog_to_tag action - support other than "master" for the main branch name, as well (#75)
+
+- Use GITHUB_REF_NAME as name of push branch; fix error in branch detection [citest skip] (#76)
+
+We need to get the name of the branch to which CHANGELOG.md was pushed.
+For now, it looks as though `GITHUB_REF_NAME` is that name.  But don't
+trust it - first, check that it is `main` or `master`.  If not, then use
+a couple of other methods to determine what is the push branch.
+
+Signed-off-by: Rich Megginson <rmeggins@redhat.com>
+
 [1.2.5] - 2022-07-19
 --------------------
 
