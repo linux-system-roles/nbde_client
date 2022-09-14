@@ -6,7 +6,7 @@
 
 - name: Enable clevis askpass unit
   service:
-    name: clevis-luks-askpass.path
+    name: "{{ nbde_client_clevis_luks_askpass_unit }}"
     enabled: yes
 
 - name: Generate nbde_client dracut config

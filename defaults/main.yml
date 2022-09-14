@@ -19,4 +19,7 @@ nbde_client_provider: clevis
 #        - http://server2.example.com
 nbde_client_bindings: []
 
+# The name of the clevis-luks-askpass systemd unit
+nbde_client_clevis_luks_askpass_unit: clevis-luks-askpass.path
+
 # vim:set ts=2 sw=2 et:
