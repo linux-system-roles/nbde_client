@@ -29,6 +29,7 @@ These are the variables that can be passed to the role:
 |----------|-------------|------|
 | `nbde_client_provider` | `clevis`| identifies the provider for the `nbde_client` role. We currently support `clevis`.|
 | `nbde_client_bindings` | | a list containing binding configurations, which include e.g. devices and slots. |
+| `nbde_client_clevis_luks_askpass_unit` | `clevis-luks-askpass.path` | the name of the clevis-luks-askpass systemd unit |
 
 
 #### nbde_client_bindings
