@@ -54,6 +54,7 @@
         bindings: "{{ nbde_client_bindings | default([]) }}"
         data_dir: "{{ nbde_client_tempdir.path }}"
       notify: nbde_client update initramfs
+      no_log: true
 
   always:
     - name: Remove temporary directory used to hold key files
