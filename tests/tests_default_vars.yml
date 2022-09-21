@@ -12,5 +12,4 @@
           loop:
             - nbde_client_provider
             - nbde_client_bindings
-            - nbde_client_clevis_luks_askpass_unit
 # vim:set ts=2 sw=2 et:
