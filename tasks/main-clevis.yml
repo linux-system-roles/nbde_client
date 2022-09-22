@@ -8,6 +8,9 @@
   service:
     name: clevis-luks-askpass.path
     enabled: yes
+  when: ansible_distribution != "RedHat" or
+    (not ansible_distribution_version is version("8.2", "==") and
+     not ansible_distribution_version is version("8.3", "=="))
 
 - name: Generate nbde_client dracut config
   template:
