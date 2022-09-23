@@ -37,6 +37,21 @@
   package:
     name: "{{ nbde_client_test_packages }}"
 
+- name: Create temp dir test
+  tempfile:
+    state: directory
+    prefix: lsr_nbde_client_
+  register: __nbde_client_tmp_dir
+  changed_when: false
+
+- name: Set nbde_client_test_encryption_key_src, dest, roles dir
+  set_fact:
+    nbde_client_test_roles_dir: "{{ __nbde_client_tmp_dir.path }}"
+    nbde_client_test_encryption_key_src: >-
+      {{ __nbde_client_tmp_dir.path }}/encryption_key
+    nbde_client_test_encryption_key_dest: >-
+      /tmp/encryption_key
+
 - name: Clone nbde_server role for the tests
   git:  # noqa 401 - we want to use latest here
     repo: https://github.com/linux-system-roles/nbde_server
@@ -61,9 +76,10 @@
   changed_when: false
 
 - name: Create key file for test device
-  shell: >
-    echo -n {{ nbde_client_test_pass }} >
-    {{ nbde_client_test_encryption_key_src }}
+  copy:
+    content: "{{ nbde_client_test_pass }}"
+    dest: "{{ nbde_client_test_encryption_key_src }}"
+    mode: preserve
   delegate_to: localhost
   changed_when: false
 
