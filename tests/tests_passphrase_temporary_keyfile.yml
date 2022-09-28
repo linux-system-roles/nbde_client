@@ -34,7 +34,7 @@
         - name: copy the key file to the managed host
           copy:
             src: "{{ nbde_client_test_encryption_key_src }}"
-            dest: "{{ nbde_client_test_encryption_key_src }}"
+            dest: "{{ nbde_client_test_encryption_key_dest }}"
             mode: preserve
 
         - name: Attempt to check whether default key file works

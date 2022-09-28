@@ -4,15 +4,15 @@
     path: "{{ nbde_client_test_device }}"
     state: absent
 
-- name: Clean up dummy key file
+- name: Clean up test dir on controller
   file:
-    path: "{{ nbde_client_test_encryption_key_src }}"
+    path: "{{ nbde_client_test_roles_dir }}"
     state: absent
   delegate_to: localhost
 
 - name: Clean up dummy key file on managed host
   file:
-    path: "{{ nbde_client_test_encryption_key_src }}"
+    path: "{{ nbde_client_test_encryption_key_dest }}"
     state: absent
 
 # vim:set ts=2 sw=2 et:

@@ -26,6 +26,7 @@
     bindings: "{{ nbde_client_bindings | default([]) }}"
   check_mode: yes
   register: __nbde_client_clevis_check_state
+  no_log: true
 
 - name: Prepare key files, perform clevis operations and dispose of key files
   block:
@@ -48,6 +49,7 @@
       loop: "{{ nbde_client_bindings }}"
       loop_control:
         label: "{{ item.encryption_key_src | default('') }}"
+      no_log: true
 
     - name: Perform clevis operations
       when:
@@ -57,6 +59,7 @@
         bindings: "{{ nbde_client_bindings | default([]) }}"
         data_dir: "{{ nbde_client_tempdir.path }}"
       notify: nbde_client update initramfs
+      no_log: true
 
   always:
     - name: Remove temporary directory used to hold key files

@@ -2,7 +2,7 @@
 - name: Verify the default key file works
   command: >
     cryptsetup open --test-passphrase "{{ nbde_client_test_device }}"
-    --key-file "{{ nbde_client_test_encryption_key_src }}"
+    --key-file "{{ nbde_client_test_encryption_key_dest }}"
   ignore_errors: yes
   changed_when: false
   register: nbde_client_encryption_key
