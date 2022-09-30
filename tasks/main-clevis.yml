@@ -4,13 +4,14 @@
     name: "{{ __nbde_client_packages }}"
     state: present
 
+- name: Get services
+  service_facts:
+
 - name: Enable clevis askpass unit
   service:
     name: clevis-luks-askpass.path
     enabled: yes
-  when: ansible_distribution != "RedHat" or
-    (not ansible_distribution_version is version("8.2", "==") and
-     not ansible_distribution_version is version("8.3", "=="))
+  when: ansible_facts.services['clevis-luks-askpass.service'] is defined
 
 - name: Generate nbde_client dracut config
   template:
