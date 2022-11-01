@@ -1,6 +1,35 @@
 Changelog
 =========
 
+[1.2.7] - 2022-11-01
+--------------------
+
+### New Features
+
+- none
+
+### Bug Fixes
+
+- correct clevis askpass unit conditional (#81)
+
+- Add default clevis luks askpass unit (#79)
+
+skip clevis askpass systemd unit for RHEL 8.2 and 8.3
+
+- use no_log: true where secrets might be revealed
+
+### Other Changes
+
+- fix test tmp files (#80)
+
+tests - use generated temp directory for all controller files
+
+If you run multiple tests in parallel, some of the tests could overwrite
+or remove files in use by other tests on the controller.  Use a
+temp directory for controller files.
+
+- test support for CentOS Stream 9
+
 [1.2.6] - 2022-07-28
 --------------------
 
