@@ -19,6 +19,7 @@
     dest: /etc/dracut.conf.d/nbde_client.conf
     owner: root
     mode: '0444'
+  notify: nbde_client update initramfs
 
 - name: Check whether devices are at the desired state
   when:
