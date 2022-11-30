@@ -1,6 +1,25 @@
 Changelog
 =========
 
+[1.2.8] - 2022-11-29
+--------------------
+
+### New Features
+
+- none
+
+### Bug Fixes
+
+- use fedora.linux_system_roles.nbde_server for tests (#86)
+
+use fedora.linux_system_roles.nbde_server for tests instead of git
+cloning the repo.  Use the `tests/collection-requirements.yml` so
+the test infrastructure will install the collection.
+
+### Other Changes
+
+- none
+
 [1.2.7] - 2022-11-01
 --------------------
 
