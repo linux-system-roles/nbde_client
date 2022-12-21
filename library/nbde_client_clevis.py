@@ -999,7 +999,9 @@ def unbind_slot(module, device, slot):
 
 
 def new_key(module, device):
-    """Generate a new key with the same entropy as the LUKS master key.
+    """
+    wokeignore:rule=master
+    Generate a new key with the same entropy as the LUKS master key.
     Return <key> <error>"""
 
     luks, err = get_luks_type(module, device)
@@ -1432,8 +1434,8 @@ def already_bound(module, **kwargs):
     return True
 
 
-def bindings_sanity_check(bindings, data_dir, check_mode):
-    """Performs sanity-checking on the bindings list and related arguments.
+def bindings_confidence_check(bindings, data_dir, check_mode):
+    """Performs confidence-checking on the bindings list and related arguments.
     Return: <bindings> <error>"""
 
     # bindings is a list of the following:
@@ -1584,7 +1586,7 @@ def run_module():
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
     params = module.params
 
-    bindings, err = bindings_sanity_check(
+    bindings, err = bindings_confidence_check(
         params["bindings"], params["data_dir"], module.check_mode
     )
 

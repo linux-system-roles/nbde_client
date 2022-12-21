@@ -44,7 +44,7 @@ These are the variables that can be passed to the role:
 | `slot` | `1` | specifies the slot to use for the binding. |
 | `servers` | |  specifies a list of servers to bind to. To enable high availability, specify more than one server here. |
 | `threshold` | `1` | specifies the threshold for the Shamir Secret Sharing (SSS) scheme that is put in place when using more than one server. When using multiple servers, threshold indicates how many of those servers should succeed, in terms of decryption, in order to complete the process of recovering the LUKS passphrase to open the device. |
-| `password_temporary` | `no` | If yes, the password or passphrase that was provided via the `encryption_password` or `encryption_key` arguments will be used to unlock the device and then it will be removed from the LUKS device after the binding operation completes, i.e. it will not be valid anymore. To be used if device has been previously created with a dummy password or passphrase (for example by an automated install like kickstart that set up some sort of "default" password), which the role should replace by a stronger one. |
+| `password_temporary` | `no` | If yes, the password or passphrase that was provided via the `encryption_password` or `encryption_key` arguments will be used to unlock the device and then it will be removed from the LUKS device after the binding operation completes, i.e. it will not be valid anymore. To be used if device has been previously created with a sample password or passphrase (for example by an automated install like kickstart that set up some sort of "default" password), which the role should replace by a stronger one. |
 
 
 Example:
