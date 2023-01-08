@@ -1,6 +1,6 @@
 ---
-- hosts: all
-
+- name: Test key rotation
+  hosts: all
   vars:
     nbde_client_bindings:
       - device: "{{ nbde_client_test_device }}"

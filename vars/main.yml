@@ -3,7 +3,7 @@
 # Put the role's internal variables here that are not distribution specific.
 # __nbde_client_update_initramfs can be used to disabled the initramfs update.
 # Mostly useful when debugging/testing.
-__nbde_client_update_initramfs: yes
+__nbde_client_update_initramfs: true
 
 # ansible_facts required by the role
 __nbde_client_required_facts:

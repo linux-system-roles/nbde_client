@@ -10,7 +10,7 @@
 - name: Enable clevis askpass unit
   service:
     name: clevis-luks-askpass.path
-    enabled: yes
+    enabled: true
   when: ansible_facts.services['clevis-luks-askpass.service'] is defined
 
 - name: Generate nbde_client dracut config
@@ -25,11 +25,14 @@
     - nbde_client_bindings | default([])
   nbde_client_clevis:
     bindings: "{{ nbde_client_bindings | default([]) }}"
-  check_mode: yes
+  check_mode: true
   register: __nbde_client_clevis_check_state
   no_log: true
 
 - name: Prepare key files, perform clevis operations and dispose of key files
+  when:
+    - __nbde_client_clevis_check_state is defined
+    - __nbde_client_clevis_check_state is changed
   block:
     - name: Create temporary directory to hold key files
       tempfile:
@@ -59,7 +62,7 @@
       nbde_client_clevis:
         bindings: "{{ nbde_client_bindings | default([]) }}"
         data_dir: "{{ nbde_client_tempdir.path }}"
-      notify: nbde_client update initramfs
+      notify: Handle nbde_client update initramfs
       no_log: true
 
   always:
@@ -70,10 +73,6 @@
       when:
         - nbde_client_bindings | default([])
         - nbde_client_tempdir.path is defined
-
-  when:
-    - __nbde_client_clevis_check_state is defined
-    - __nbde_client_clevis_check_state is changed
 
 - name: Set-up network flushing
   block:
@@ -104,11 +103,11 @@
 
     - name: Reload systemd config
       systemd:
-        daemon_reload: yes
+        daemon_reload: true
 
     - name: Enable network flushing service
       service:
         name: nbde_client-network-flush.service
-        enabled: yes
+        enabled: ttue
 
 # vim:set ts=2 sw=2 et:

@@ -1,6 +1,6 @@
 ---
-- hosts: all
-
+- name: Test simple bind
+  hosts: all
   vars:
     nbde_client_bindings:
       - device: "{{ nbde_client_test_device }}"
