@@ -1,6 +1,6 @@
 ---
-- hosts: all
-
+- name: Test using existing binding
+  hosts: all
   tasks:
     - name: Test 1 - initial binding performed by nbde_client role
       block:
@@ -68,8 +68,9 @@
         - name: Download advertisement
           get_url:
             url: http://localhost/adv
-            force: yes
+            force: true
             dest: "{{ nbde_client_temp_adv.path }}"
+            mode: 0600
 
         - name: Add binding to slot 1
           shell: >
@@ -77,6 +78,7 @@
             '{"url": "http://localhost",
             "adv": "{{ nbde_client_temp_adv.path }}"}'
             <<< {{ nbde_client_test_pass }}
+          changed_when: false
 
         - name: Remove temp advertisement file
           file:

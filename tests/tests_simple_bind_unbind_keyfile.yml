@@ -1,6 +1,6 @@
 ---
-- hosts: all
-
+- name: Test simple bind and unbind with keyfile
+  hosts: all
   vars:
     nbde_client_bindings:
       - device: "{{ nbde_client_test_device }}"
