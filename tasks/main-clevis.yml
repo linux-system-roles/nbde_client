@@ -108,6 +108,6 @@
     - name: Enable network flushing service
       service:
         name: nbde_client-network-flush.service
-        enabled: ttue
+        enabled: true
 
 # vim:set ts=2 sw=2 et:
