@@ -98,8 +98,9 @@ EXAMPLES = """
 """
 
 RETURN = """
-original_bindings::
-    description: The original nbde_client_bindings param that was passed in
+original_bindings:
+    description: The original nbde_client_bindings param that was passed in,
+      but with the secrets obscured
     type: list
     returned: always
 msg:
@@ -1575,6 +1576,13 @@ def process_bindings(module, bindings):
     return result
 
 
+def obscure_sensitive_parameters(result):
+    bindings = result.get("original_bindings", [])
+    for binding in bindings:
+        if "encryption_password" in binding:
+            binding["encryption_password"] = "***"
+
+
 def run_module():
     """The entry point of the module."""
 
@@ -1594,10 +1602,23 @@ def run_module():
         err["changed"] = False
         result = err
     else:
-        result = process_bindings(module, bindings)
+        try:
+            result = process_bindings(module, bindings)
+        except NbdeClientClevisError as ncce:
+            if len(ncce.args) > 0:
+                result = ncce.args[0]
+            else:
+                result = {"msg": "Module failed"}
+            err = result
 
     result["original_bindings"] = params["bindings"]
-    module.exit_json(**result)
+    obscure_sensitive_parameters(result)
+    if err:
+        if "msg" not in result:
+            result["msg"] = "Module failed"
+        module.fail_json(**result)
+    else:
+        module.exit_json(**result)
 
 
 def main():

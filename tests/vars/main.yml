@@ -3,6 +3,5 @@
 # Put the tests internal variables here that are not distribution specific.
 
 nbde_client_test_device: /tmp/.nbde_client_dev_test
-nbde_client_test_pass: test-password-here
 
 # vim:set ts=2 sw=2 et:
