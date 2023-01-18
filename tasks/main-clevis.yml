@@ -8,7 +8,7 @@
   service_facts:
 
 - name: Enable clevis askpass unit
-  service:
+  systemd:
     name: clevis-luks-askpass.path
     enabled: true
     daemon_reload: true
