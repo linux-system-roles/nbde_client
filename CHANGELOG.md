@@ -1,6 +1,23 @@
 Changelog
 =========
 
+[1.2.9] - 2023-01-19
+--------------------
+
+### New Features
+
+- none
+
+### Bug Fixes
+
+- Do not report password in stacktrace or return value from module (#98)
+- Use daemon_reload with askpass path service (#96)
+
+### Other Changes
+
+- Cleanup non-inclusive words.
+- ansible-lint 6.x fixes (#92)
+
 [1.2.8] - 2022-11-29
 --------------------
 
