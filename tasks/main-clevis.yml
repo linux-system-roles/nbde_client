@@ -8,9 +8,10 @@
   service_facts:
 
 - name: Enable clevis askpass unit
-  service:
+  systemd:
     name: clevis-luks-askpass.path
     enabled: true
+    daemon_reload: true
   when: ansible_facts.services['clevis-luks-askpass.service'] is defined
 
 - name: Generate nbde_client dracut config
