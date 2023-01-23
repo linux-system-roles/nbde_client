@@ -1,6 +1,21 @@
 Changelog
 =========
 
+[1.2.10] - 2023-01-23
+--------------------
+
+### New Features
+
+- none
+
+### Bug Fixes
+
+- Fix nbde_client error handling (#101)
+
+### Other Changes
+
+- none
+
 [1.2.9] - 2023-01-19
 --------------------
 
