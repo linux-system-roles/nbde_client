@@ -66,6 +66,11 @@
       notify: Handle nbde_client update initramfs
       no_log: true
 
+  rescue:
+    - name: Failed message
+      fail:
+        msg: "{{ ansible_failed_result }}"
+
   always:
     - name: Remove temporary directory used to hold key files
       file:
