@@ -1577,10 +1577,16 @@ def process_bindings(module, bindings):
 
 
 def obscure_sensitive_parameters(result):
-    bindings = result.get("original_bindings", [])
-    for binding in bindings:
-        if "encryption_password" in binding:
-            binding["encryption_password"] = "***"
+    """Find and obscure sensitive data in nested data structures."""
+    if isinstance(result, dict):
+        for kk, vv in list(result.items()):
+            if kk == "encryption_password":
+                result[kk] = "***"
+            else:
+                obscure_sensitive_parameters(vv)
+    elif isinstance(result, list):
+        for item in result:
+            obscure_sensitive_parameters(item)
 
 
 def run_module():
