@@ -1,4 +1,6 @@
 #!/bin/sh
+{{ ansible_managed | comment }}
+{{ "system_role:nbde_client" | comment(prefix="", postfix="") }}
 
 # disable_inird_connections() will disable autoconnect for the active
 # connections within the initramfs, so that these will not clash with

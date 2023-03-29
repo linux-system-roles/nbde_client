@@ -1,4 +1,6 @@
 #!/bin/sh
+{{ ansible_managed | comment }}
+{{ "system_role:nbde_client" | comment(prefix="", postfix="") }}
 
 # do_flush() flushes every active network interface. It is intended to
 # run before NetworkManager starts, so that when it does it will be able
