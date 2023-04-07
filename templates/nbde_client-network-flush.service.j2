@@ -1,3 +1,5 @@
+{{ ansible_managed | comment }}
+{{ "system_role:nbde_client" | comment(prefix="", postfix="") }}
 [Unit]
 Description=Network flush service for nbde_client Ansible role
 Before=network-pre.target
