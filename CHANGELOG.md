@@ -1,6 +1,14 @@
 Changelog
 =========
 
+[1.2.11] - 2023-04-07
+--------------------
+
+### Other Changes
+
+- Add README-ansible.md to refer Ansible intro page on linux-system-roles.github.io (#110)
+- Use templates instead of files for ansible_managed (#111)
+
 [1.2.10] - 2023-01-23
 --------------------
 
