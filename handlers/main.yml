@@ -6,5 +6,6 @@
     - __nbde_client_update_initramfs | bool
     - __nbde_client_initramfs_update_cmd | default("")
   command: "{{ __nbde_client_initramfs_update_cmd }}"
+  changed_when: false
 
 # vim:set ts=2 sw=2 et:
