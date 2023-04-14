@@ -1,6 +1,13 @@
 Changelog
 =========
 
+[1.2.12] - 2023-04-13
+--------------------
+
+### Other Changes
+
+- remove unused symlink; fix ansible-lint handler issue (#113)
+
 [1.2.11] - 2023-04-07
 --------------------
 
