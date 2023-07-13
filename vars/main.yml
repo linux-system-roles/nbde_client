@@ -12,4 +12,10 @@ __nbde_client_required_facts:
   - distribution_version
   - os_family
 
+# the subsets of ansible_facts that need to be gathered in case any of the
+# facts in required_facts is missing; see the documentation of
+# the 'gather_subset' parameter of the 'setup' module
+__nbde_client_required_facts_subsets: "{{ ['!all', '!min'] +
+  __nbde_client_required_facts }}"
+
 # vim:set ts=2 sw=2 et:
