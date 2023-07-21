@@ -8,9 +8,10 @@
   service_facts:
 
 - name: Enable clevis askpass unit
-  service:
+  systemd:
     name: clevis-luks-askpass.path
-    enabled: yes
+    enabled: true
+    daemon_reload: true
   when: ansible_facts.services['clevis-luks-askpass.service'] is defined
 
 - name: Generate nbde_client dracut config
@@ -26,11 +27,14 @@
     - nbde_client_bindings | default([])
   nbde_client_clevis:
     bindings: "{{ nbde_client_bindings | default([]) }}"
-  check_mode: yes
+  check_mode: true
   register: __nbde_client_clevis_check_state
   no_log: true
 
 - name: Prepare key files, perform clevis operations and dispose of key files
+  when:
+    - __nbde_client_clevis_check_state is defined
+    - __nbde_client_clevis_check_state is changed
   block:
     - name: Create temporary directory to hold key files
       tempfile:
@@ -60,8 +64,13 @@
       nbde_client_clevis:
         bindings: "{{ nbde_client_bindings | default([]) }}"
         data_dir: "{{ nbde_client_tempdir.path }}"
-      notify: nbde_client update initramfs
+      notify: Handle nbde_client update initramfs
       no_log: true
+
+  rescue:
+    - name: Failed message
+      fail:
+        msg: "{{ ansible_failed_result }}"
 
   always:
     - name: Remove temporary directory used to hold key files
@@ -72,30 +81,35 @@
         - nbde_client_bindings | default([])
         - nbde_client_tempdir.path is defined
 
-  when:
-    - __nbde_client_clevis_check_state is defined
-    - __nbde_client_clevis_check_state is changed
-
 - name: Set-up network flushing
   block:
     - name: Deploy network flushing script
-      copy:
-        src: "{{ role_path }}/files/nbde_client-network-flush"
+      template:
+        src: nbde_client-network-flush.j2
         dest: /usr/bin/nbde_client-network-flush
         mode: '0755'
 
     - name: Deploy network flushing service
-      copy:
-        src: "{{ role_path }}/files/nbde_client-network-flush.service"
+      template:
+        src: nbde_client-network-flush.service.j2
         dest: /etc/systemd/system/nbde_client-network-flush.service
         mode: '0644'
 
+    - name: Create a directory for nbde_client dracut network flushing module
+      file:
+        path: /usr/lib/dracut/modules.d/60nbde_client/
+        state: directory
+        mode: '0755'
+
     - name: Deploy nbde_client dracut network flushing module
-      copy:
-        src: "{{ role_path }}/files/nbde_client/"
-        dest: /usr/lib/dracut/modules.d/60nbde_client/
-        directory_mode: '0755'
+      template:
+        src: "{{ item }}"
+        dest: >-
+          /usr/lib/dracut/modules.d/60nbde_client/{{ item | splitext | first }}
         mode: '0644'
+      loop:
+        - module-setup.sh.j2
+        - nbde_client-hook.sh.j2
 
     - name: Prepare for network flushing - reset autoconnect-priority
       ansible.builtin.command:
@@ -105,11 +119,11 @@
 
     - name: Reload systemd config
       systemd:
-        daemon_reload: yes
+        daemon_reload: true
 
     - name: Enable network flushing service
       service:
         name: nbde_client-network-flush.service
-        enabled: yes
+        enabled: true
 
 # vim:set ts=2 sw=2 et:

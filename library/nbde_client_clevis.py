@@ -98,8 +98,9 @@ EXAMPLES = """
 """
 
 RETURN = """
-original_bindings::
-    description: The original nbde_client_bindings param that was passed in
+original_bindings:
+    description: The original nbde_client_bindings param that was passed in,
+      but with the secrets obscured
     type: list
     returned: always
 msg:
@@ -999,7 +1000,9 @@ def unbind_slot(module, device, slot):
 
 
 def new_key(module, device):
-    """Generate a new key with the same entropy as the LUKS master key.
+    """
+    wokeignore:rule=master
+    Generate a new key with the same entropy as the LUKS master key.
     Return <key> <error>"""
 
     luks, err = get_luks_type(module, device)
@@ -1432,8 +1435,8 @@ def already_bound(module, **kwargs):
     return True
 
 
-def bindings_sanity_check(bindings, data_dir, check_mode):
-    """Performs sanity-checking on the bindings list and related arguments.
+def bindings_confidence_check(bindings, data_dir, check_mode):
+    """Performs confidence-checking on the bindings list and related arguments.
     Return: <bindings> <error>"""
 
     # bindings is a list of the following:
@@ -1573,6 +1576,19 @@ def process_bindings(module, bindings):
     return result
 
 
+def obscure_sensitive_parameters(result):
+    """Find and obscure sensitive data in nested data structures."""
+    if isinstance(result, dict):
+        for kk, vv in list(result.items()):
+            if kk == "encryption_password":
+                result[kk] = "***"
+            else:
+                obscure_sensitive_parameters(vv)
+    elif isinstance(result, list):
+        for item in result:
+            obscure_sensitive_parameters(item)
+
+
 def run_module():
     """The entry point of the module."""
 
@@ -1584,7 +1600,7 @@ def run_module():
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
     params = module.params
 
-    bindings, err = bindings_sanity_check(
+    bindings, err = bindings_confidence_check(
         params["bindings"], params["data_dir"], module.check_mode
     )
 
@@ -1592,10 +1608,23 @@ def run_module():
         err["changed"] = False
         result = err
     else:
-        result = process_bindings(module, bindings)
+        try:
+            result = process_bindings(module, bindings)
+        except NbdeClientClevisError as ncce:
+            if len(ncce.args) > 0:
+                result = ncce.args[0]
+            else:
+                result = {"msg": "Module failed"}
+            err = result
 
     result["original_bindings"] = params["bindings"]
-    module.exit_json(**result)
+    obscure_sensitive_parameters(result)
+    if err:
+        if "msg" not in result:
+            result["msg"] = "Module failed"
+        module.fail_json(**result)
+    else:
+        module.exit_json(**result)
 
 
 def main():

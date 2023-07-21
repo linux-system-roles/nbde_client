@@ -1,2 +1,23 @@
 ---
-skip_list: []
+profile: production
+kinds:
+  - yaml: "**/meta/collection-requirements.yml"
+  - playbook: "**/tests/get_coverage.yml"
+  - yaml: "**/tests/collection-requirements.yml"
+  - playbook: "**/tests/tests_*.yml"
+  - playbook: "**/tests/setup-snapshot.yml"
+  - tasks: "**/tests/*.yml"
+  - playbook: "**/tests/playbooks/*.yml"
+  - tasks: "**/tests/tasks/*.yml"
+  - tasks: "**/tests/tasks/*/*.yml"
+  - vars: "**/tests/vars/*.yml"
+  - playbook: "**/examples/*.yml"
+skip_list:
+  - fqcn-builtins
+  - var-naming[no-role-prefix]
+exclude_paths:
+  - tests/roles/
+  - .github/
+  - examples/roles/
+mock_roles:
+  - linux-system-roles.nbde_client

@@ -1,6 +1,97 @@
 Changelog
 =========
 
+[1.2.14] - 2023-07-19
+--------------------
+
+### Bug Fixes
+
+- fix: facts being gathered unnecessarily (#127)
+
+### Other Changes
+
+- docs: Consistent contributing.md for all roles - allow role specific contributing.md section (#120)
+- ci: update tox-lsr to version 3.0.0 (#121)
+- ci: Add pull request template and run commitlint on PR title only (#122)
+- ci: Rename commitlint to PR title Lint, echo PR titles from env var (#123)
+- ci: fix python 2.7 CI tests by manually installing python2.7 package (#124)
+- ci: ansible-lint - ignore var-naming[no-role-prefix] (#125)
+- ci: ansible-test ignores file for ansible-core 2.15 (#126)
+
+[1.2.13] - 2023-04-27
+--------------------
+
+### Other Changes
+
+- test: check generated files for ansible_managed, fingerprint
+- ci: Add commitlint GitHub action to ensure conventional commits with feedback
+
+[1.2.12] - 2023-04-13
+--------------------
+
+### Other Changes
+
+- remove unused symlink; fix ansible-lint handler issue (#113)
+
+[1.2.11] - 2023-04-07
+--------------------
+
+### Other Changes
+
+- Add README-ansible.md to refer Ansible intro page on linux-system-roles.github.io (#110)
+- Use templates instead of files for ansible_managed (#111)
+
+[1.2.10] - 2023-01-23
+--------------------
+
+### New Features
+
+- none
+
+### Bug Fixes
+
+- Fix nbde_client error handling (#101)
+
+### Other Changes
+
+- none
+
+[1.2.9] - 2023-01-19
+--------------------
+
+### New Features
+
+- none
+
+### Bug Fixes
+
+- Do not report password in stacktrace or return value from module (#98)
+- Use daemon_reload with askpass path service (#96)
+
+### Other Changes
+
+- Cleanup non-inclusive words.
+- ansible-lint 6.x fixes (#92)
+
+[1.2.8] - 2022-11-29
+--------------------
+
+### New Features
+
+- none
+
+### Bug Fixes
+
+- use fedora.linux_system_roles.nbde_server for tests (#86)
+
+use fedora.linux_system_roles.nbde_server for tests instead of git
+cloning the repo.  Use the `tests/collection-requirements.yml` so
+the test infrastructure will install the collection.
+
+### Other Changes
+
+- none
+
 [1.2.7] - 2022-11-01
 --------------------
 
@@ -45,14 +136,11 @@ temp directory for controller files.
 
 ### Other Changes
 
-- changelog_to_tag action - support other than "master" for the main branch name, as well (#75)
+- changelog_to_tag action - github action ansible test improvements
 
 - Use GITHUB_REF_NAME as name of push branch; fix error in branch detection [citest skip] (#76)
 
 We need to get the name of the branch to which CHANGELOG.md was pushed.
-For now, it looks as though `GITHUB_REF_NAME` is that name.  But don't
-trust it - first, check that it is `main` or `master`.  If not, then use
-a couple of other methods to determine what is the push branch.
 
 Signed-off-by: Rich Megginson <rmeggins@redhat.com>
 
@@ -235,7 +323,7 @@ must be a `string` value like `"2.9"`, not a `float` value like `2.9`.
 
 - Remove python-26 environment from tox testing
 - README.md - Adding a blank line after nbde\_client\_bindings
-- update to tox-lsr 2.4.0 - add support for ansible-test sanity with docker
+- update to tox-lsr 2.4.0 - add support for ansible-test with docker
 - Increase memory of tests
 - CI: Add support for RHEL-9
 

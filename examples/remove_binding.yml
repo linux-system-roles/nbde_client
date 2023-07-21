@@ -1,6 +1,6 @@
 ---
-- hosts: all
-
+- name: Remove bindings
+  hosts: all
   vars:
     nbde_client_bindings:
       - device: /dev/sda1
@@ -9,7 +9,6 @@
         encryption_password: password
         slot: 2
         state: absent
-
   roles:
     - linux-system-roles.nbde_client
 # vim:set ts=2 sw=2 et:

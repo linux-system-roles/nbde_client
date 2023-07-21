@@ -1,4 +1,6 @@
 #!/bin/sh
+{{ ansible_managed | comment }}
+{{ "system_role:nbde_client" | comment(prefix="", postfix="") }}
 
 depends() {
   echo network-manager

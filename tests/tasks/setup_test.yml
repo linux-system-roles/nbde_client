@@ -37,31 +37,24 @@
   package:
     name: "{{ nbde_client_test_packages }}"
 
-- name: Create temp dir test
+- name: Create temp dir for test on controller
   tempfile:
     state: directory
     prefix: lsr_nbde_client_
-  register: __nbde_client_tmp_dir
+  register: __nbde_client_tmp_dir_local
   changed_when: false
+  delegate_to: localhost
 
 - name: Set nbde_client_test_encryption_key_src, dest, roles dir
   set_fact:
-    nbde_client_test_roles_dir: "{{ __nbde_client_tmp_dir.path }}"
     nbde_client_test_encryption_key_src: >-
-      {{ __nbde_client_tmp_dir.path }}/encryption_key
+      {{ __nbde_client_tmp_dir_local.path }}/encryption_key
     nbde_client_test_encryption_key_dest: >-
       /tmp/encryption_key
 
-- name: Clone nbde_server role for the tests
-  git:  # noqa 401 - we want to use latest here
-    repo: https://github.com/linux-system-roles/nbde_server
-    dest: "{{ nbde_client_test_roles_dir }}/linux-system-roles.nbde_server"
-  delegate_to: localhost
-  become: false
-
 - name: Deploy NBDE server for testing
   include_role:
-    name: "{{ nbde_client_test_roles_dir }}/linux-system-roles.nbde_server"
+    name: fedora.linux_system_roles.nbde_server
 
 - name: Create device for testing
   command: fallocate -l64m {{ nbde_client_test_device }}

@@ -1,11 +1,11 @@
 ---
-- hosts: all
-
+- name: Test with a temporary passphase
+  hosts: all
   vars:
     nbde_client_bindings:
       - device: "{{ nbde_client_test_device }}"
         encryption_password: "{{ nbde_client_test_pass }}"
-        password_temporary: yes
+        password_temporary: true
         servers:
           - http://localhost
       - device: "{{ nbde_client_test_device }}"

@@ -1,11 +1,11 @@
 ---
-- hosts: all
-
+- name: Test using a passphase and keyfile
+  hosts: all
   vars:
     nbde_client_bindings:
       - device: "{{ nbde_client_test_device }}"
         encryption_key_src: "{{ nbde_client_test_encryption_key_src }}"
-        password_temporary: yes
+        password_temporary: true
         servers:
           - http://localhost
       - device: "{{ nbde_client_test_device }}"
@@ -31,7 +31,7 @@
               - not nbde_client_unlock.failed
               - not nbde_client_close.failed
 
-        - name: copy the key file to the managed host
+        - name: Copy the key file to the managed host
           copy:
             src: "{{ nbde_client_test_encryption_key_src }}"
             dest: "{{ nbde_client_test_encryption_key_dest }}"

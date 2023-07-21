@@ -1,16 +1,16 @@
 ---
-- name: Clean up dummy testing device
+- name: Clean up sample testing device
   file:
     path: "{{ nbde_client_test_device }}"
     state: absent
 
 - name: Clean up test dir on controller
   file:
-    path: "{{ nbde_client_test_roles_dir }}"
+    path: "{{ __nbde_client_tmp_dir_local.path }}"
     state: absent
   delegate_to: localhost
 
-- name: Clean up dummy key file on managed host
+- name: Clean up test encryption key on managed host
   file:
     path: "{{ nbde_client_test_encryption_key_dest }}"
     state: absent

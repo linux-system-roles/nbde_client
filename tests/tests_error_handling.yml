@@ -1,0 +1,43 @@
+---
+- name: Test error handling
+  hosts: all
+  vars:
+    __test_dev: /no/such/path/or/device
+    nbde_client_bindings:
+      - device: "{{ __test_dev }}"
+        encryption_password: "{{ nbde_client_test_pass }}"
+        servers:
+          - http://localhost
+
+  tasks:
+    - name: Set up test environment
+      include_tasks: tasks/setup_test.yml
+
+    - name: Run the test
+      block:
+        - name: Use nbde_client role
+          include_role:
+            name: linux-system-roles.nbde_client
+      rescue:
+        - name: Extract the result
+          set_fact:
+            __result: "{{ ansible_failed_result
+              if 'original_bindings' in ansible_failed_result
+              else ansible_failed_result.msg }}"
+
+        - name: Assert that the error message is correct
+          assert:
+            that: __result.msg is search(__errmsg)
+          vars:
+            __errmsg: Device {{ __test_dev }} .* exist or access denied.
+
+        - name: Assert that the password is obscured
+          assert:
+            that: __pwd == "***"
+          vars:
+            __pwfield: encryption_password
+            __pwd: "{{ __result.original_bindings[0][__pwfield] }}"
+      always:
+        - name: Clean up test environment
+          include_tasks: tasks/cleanup_test.yml
+# vim:set ts=2 sw=2 et:
