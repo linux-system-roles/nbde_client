@@ -1,44 +1,38 @@
-nbde_client
------------
-![CI Testing](https://github.com/linux-system-roles/nbde_client/workflows/tox/badge.svg)
+# nbde_client
+
+[![ansible-lint.yml](https://github.com/linux-system-roles/nbde_client/actions/workflows/ansible-lint.yml/badge.svg)](https://github.com/linux-system-roles/nbde_client/actions/workflows/ansible-lint.yml) [![ansible-test.yml](https://github.com/linux-system-roles/nbde_client/actions/workflows/ansible-test.yml/badge.svg)](https://github.com/linux-system-roles/nbde_client/actions/workflows/ansible-test.yml) [![codeql.yml](https://github.com/linux-system-roles/nbde_client/actions/workflows/codeql.yml/badge.svg)](https://github.com/linux-system-roles/nbde_client/actions/workflows/codeql.yml) [![markdownlint.yml](https://github.com/linux-system-roles/nbde_client/actions/workflows/markdownlint.yml/badge.svg)](https://github.com/linux-system-roles/nbde_client/actions/workflows/markdownlint.yml) [![python-unit-test.yml](https://github.com/linux-system-roles/nbde_client/actions/workflows/python-unit-test.yml/badge.svg)](https://github.com/linux-system-roles/nbde_client/actions/workflows/python-unit-test.yml) [![shellcheck.yml](https://github.com/linux-system-roles/nbde_client/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/linux-system-roles/nbde_client/actions/workflows/shellcheck.yml) [![woke.yml](https://github.com/linux-system-roles/nbde_client/actions/workflows/woke.yml/badge.svg)](https://github.com/linux-system-roles/nbde_client/actions/workflows/woke.yml)
 
 Ansible role for configuring Network-Bound Disk Encryption clients (e.g. clevis).
 
 This role currently supports `clevis` as a provider and it uses it for operations like encryption
 and decryption.
 
+## Supported Distributions
 
-Supported Distributions
------------------------
 * RHEL-7+, CentOS-7+
 * Fedora
 
+## Limitations
 
-Limitations
------------
 This role can currently create `tang` bindings. TPM2 is not supported as of now.
 
-
-Role Variables
---------------
+## Role Variables
 
 These are the variables that can be passed to the role:
-
 
 | **Variable** | **Default/Choices** | **Description** |
 |----------|-------------|------|
 | `nbde_client_provider` | `clevis`| identifies the provider for the `nbde_client` role. We currently support `clevis`.|
 | `nbde_client_bindings` | | a list containing binding configurations, which include e.g. devices and slots. |
 
-
-#### nbde_client_bindings
+### nbde_client_bindings
 
 `nbde_client_bindings` is a list of dictionaries that support the following keys:
 
 | **Name** | **Default/Choices** | **Description** |
 |----------|-------------|------|
 | `device` | | specifies the path of the backing device of an encrypted device on the managed host. This device must be already configured as a LUKS device before using the role (**REQUIRED**). |
-| `encryption_password` | | a valid password or passphrase for opening/unlocking the specified device. Recommend vault encrypting the value. See https://docs.ansible.com/ansible/latest/user_guide/vault.html |
+| `encryption_password` | | a valid password or passphrase for opening/unlocking the specified device. Recommend vault encrypting the value. See <https://docs.ansible.com/ansible/latest/user_guide/vault.html> |
 | `encryption_key_src` | | either the absolute or relative path, on the control node, of a file containing an encryption key valid for opening/unlocking the specified device.  The role will copy this file to the managed node(s). |
 | `state` | **present** / absent | specifies whether a binding with the configuration described should be added or removed. Setting state to present (the default) means a binding will be added; setting state to absent means a binding will be removed from the device/slot. |
 | `slot` | `1` | specifies the slot to use for the binding. |
@@ -46,8 +40,8 @@ These are the variables that can be passed to the role:
 | `threshold` | `1` | specifies the threshold for the Shamir Secret Sharing (SSS) scheme that is put in place when using more than one server. When using multiple servers, threshold indicates how many of those servers should succeed, in terms of decryption, in order to complete the process of recovering the LUKS passphrase to open the device. |
 | `password_temporary` | `false` | If `true`, the password or passphrase that was provided via the `encryption_password` or `encryption_key` arguments will be used to unlock the device and then it will be removed from the LUKS device after the binding operation completes, i.e. it will not be valid anymore. To be used if device has been previously created with a sample password or passphrase (for example by an automated install like kickstart that set up some sort of "default" password), which the role should replace by a stronger one. |
 
-
 Example:
+
 ```yaml
 nbde_client_bindings:
   - device: /dev/sda1
@@ -61,9 +55,9 @@ nbde_client_bindings:
       - http://server2.example.com
 ```
 
-Example Playbooks
-----------------
-#### Example 1: high availability
+## Example Playbooks
+
+### Example 1: high availability
 
 ```yaml
 ---
@@ -81,7 +75,8 @@ Example Playbooks
     - linux-system-roles.nbde_client
 ```
 
-#### Example 2: remove binding from slot 2 in /dev/sda1
+### Example 2: remove binding from slot 2 in /dev/sda1
+
 ```yaml
 ---
 - hosts: all
@@ -97,8 +92,6 @@ Example Playbooks
     - linux-system-roles.nbde_client
 ```
 
-
-License
--------
+## License
 
 MIT
