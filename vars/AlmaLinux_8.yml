@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: MIT
+---
+# Put internal variables here with AlmaLinux 8 specific values.
+
+__nbde_client_packages:
+  - clevis
+  - clevis-dracut
+  - clevis-luks
+  - clevis-systemd
+  - iproute
+  - NetworkManager
+
+__nbde_client_initramfs_update_cmd: >
+  dracut -fv --regenerate-all
+
+__nbde_client_dracut_settings:
+  - kernel_cmdline+=" rd.neednet=1 "
+  - omit_dracutmodules+=" ifcfg "
+
+# vim:set ts=2 sw=2 et:
