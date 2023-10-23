@@ -1,6 +1,17 @@
 Changelog
 =========
 
+[1.2.16] - 2023-10-23
+--------------------
+
+### Other Changes
+
+- chore: Add support for AlmaLinux 8 & 9 (#133)
+- Bump actions/checkout from 3 to 4 (#134)
+- ci: ensure dependabot git commit message conforms to commitlint (#137)
+- ci: use dump_packages.py callback to get packages used by role (#139)
+- ci: tox-lsr version 3.1.1 (#141)
+
 [1.2.15] - 2023-09-08
 --------------------
 
