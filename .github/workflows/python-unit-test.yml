@@ -40,7 +40,7 @@ jobs:
           sudo apt install -y git
 
       - name: checkout PR
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python 2.7
         if: ${{ matrix.pyver_os.ver == '2.7' }}
@@ -58,7 +58,7 @@ jobs:
         run: |
           set -euxo pipefail
           python -m pip install --upgrade pip
-          pip install "git+https://github.com/linux-system-roles/tox-lsr@3.0.0"
+          pip install "git+https://github.com/linux-system-roles/tox-lsr@3.1.1"
           # If you have additional OS dependency packages e.g. libcairo2-dev
           # then put them in .github/config/ubuntu-requirements.txt, one
           # package per line.
