@@ -14,7 +14,6 @@ DOCUMENTATION = """
 ---
 module: nbde_client_clevis
 short_description: Handle clevis-related operations on LUKS devices
-version_added: "2.9"
 description:
     - "WARNING: Do not use this module directly! It is only for role internal use."
     - "Module manages clevis bindings on encrypted devices to match the state
@@ -26,6 +25,7 @@ options:
             either added or removed from a given device/slot. It supports
             the following keys:
         type: list
+        elements: dict
         suboptions:
             device:
                 description:
@@ -88,13 +88,12 @@ EXAMPLES = """
         - http://server1.example.com
         - http://server2.example.com
 
-
 - name: Remove binding from slot 2 in /dev/sda1
   nbde_client_bindings:
-      - device: /dev/sda1
-        encryption_password: password
-        slot: 2
-        state: absent
+    - device: /dev/sda1
+      encryption_password: password
+      slot: 2
+      state: absent
 """
 
 RETURN = """
@@ -1593,7 +1592,7 @@ def run_module():
     """The entry point of the module."""
 
     module_args = dict(
-        bindings=dict(type="list", required=False),
+        bindings=dict(type="list", elements="dict", required=False),
         data_dir=dict(type="str", required=False),
     )
 
