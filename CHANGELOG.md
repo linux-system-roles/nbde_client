@@ -1,6 +1,17 @@
 Changelog
 =========
 
+[1.2.17] - 2024-01-16
+--------------------
+
+### Other Changes
+
+- ci: bump actions/github-script from 6 to 7 (#143)
+- ci: bump github/codeql-action from 2 to 3 (#144)
+- ci: bump actions/setup-python from 4 to 5 (#145)
+- ci: Use supported ansible-lint action; run ansible-lint against the collection (#146)
+- ci: Use supported ansible-lint action; run ansible-lint against the collection (#147)
+
 [1.2.16] - 2023-10-23
 --------------------
 
