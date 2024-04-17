@@ -1,0 +1,6 @@
+# nbde_client NetworkManager config
+{{ ansible_managed | comment }}
+{{ "system_role:nbde_client" | comment(prefix="", postfix="") }}
+[device]
+keep-configuration=no
+allowed-connections=except:origin:nm-initrd-generator

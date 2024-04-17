@@ -1,0 +1,45 @@
+---
+- name: Deploy network flushing script
+  template:
+    src: nbde_client-network-flush.j2
+    dest: /usr/bin/nbde_client-network-flush
+    mode: '0755'
+
+- name: Deploy network flushing service
+  template:
+    src: nbde_client-network-flush.service.j2
+    dest: /etc/systemd/system/nbde_client-network-flush.service
+    mode: '0644'
+
+- name: Create a directory for nbde_client dracut network flushing module
+  file:
+    path: /usr/lib/dracut/modules.d/60nbde_client/
+    state: directory
+    mode: '0755'
+
+- name: Deploy nbde_client dracut network flushing module
+  template:
+    src: "{{ item }}"
+    dest: >-
+      /usr/lib/dracut/modules.d/60nbde_client/{{ item | splitext | first }}
+    mode: '0644'
+  loop:
+    - module-setup.sh.j2
+    - nbde_client-hook.sh.j2
+
+- name: Prepare for network flushing - reset autoconnect-priority
+  ansible.builtin.command:
+    cmd: /usr/bin/nbde_client-network-flush reset-autoconn-prio
+  register: __nbde_client_autoconn_prio
+  changed_when: __nbde_client_autoconn_prio.stderr
+
+- name: Reload systemd config
+  systemd:
+    daemon_reload: true
+
+- name: Enable network flushing service
+  service:
+    name: nbde_client-network-flush.service
+    enabled: true
+
+# vim:set ts=2 sw=2 et:

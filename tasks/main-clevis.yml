@@ -80,49 +80,8 @@
         - nbde_client_bindings | default([])
         - nbde_client_tempdir.path is defined
 
-- name: Set-up network flushing
-  block:
-    - name: Deploy network flushing script
-      template:
-        src: nbde_client-network-flush.j2
-        dest: /usr/bin/nbde_client-network-flush
-        mode: '0755'
-
-    - name: Deploy network flushing service
-      template:
-        src: nbde_client-network-flush.service.j2
-        dest: /etc/systemd/system/nbde_client-network-flush.service
-        mode: '0644'
-
-    - name: Create a directory for nbde_client dracut network flushing module
-      file:
-        path: /usr/lib/dracut/modules.d/60nbde_client/
-        state: directory
-        mode: '0755'
-
-    - name: Deploy nbde_client dracut network flushing module
-      template:
-        src: "{{ item }}"
-        dest: >-
-          /usr/lib/dracut/modules.d/60nbde_client/{{ item | splitext | first }}
-        mode: '0644'
-      loop:
-        - module-setup.sh.j2
-        - nbde_client-hook.sh.j2
-
-    - name: Prepare for network flushing - reset autoconnect-priority
-      ansible.builtin.command:
-        cmd: /usr/bin/nbde_client-network-flush reset-autoconn-prio
-      register: __nbde_client_autoconn_prio
-      changed_when: __nbde_client_autoconn_prio.stderr
-
-    - name: Reload systemd config
-      systemd:
-        daemon_reload: true
-
-    - name: Enable network flushing service
-      service:
-        name: nbde_client-network-flush.service
-        enabled: true
+- name: Deploy mechanism to clear network configuration generated during early boot
+  include_tasks: clear_initrd_netcfg-{{ __nbde_client_clear_initrd_netcfg_strategy }}.yml
+  when: __nbde_client_clear_initrd_netcfg_strategy is defined
 
 # vim:set ts=2 sw=2 et:
