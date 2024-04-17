@@ -1,0 +1,8 @@
+---
+- name: Deploy NetworkManager configuration
+  template:
+    src: NetworkManager.conf.j2
+    dest: /etc/NetworkManager/conf.d/00-nbde_client.conf
+    mode: '0644'
+
+# vim:set ts=2 sw=2 et:

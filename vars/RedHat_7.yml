@@ -17,4 +17,6 @@ __nbde_client_dracut_settings:
   - kernel_cmdline+=" rd.neednet=1 "
   - omit_dracutmodules+=" ifcfg "
 
+__nbde_client_clear_initrd_netcfg_strategy: dracut_module
+
 # vim:set ts=2 sw=2 et:
