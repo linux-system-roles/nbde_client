@@ -1,6 +1,13 @@
 Changelog
 =========
 
+[1.2.19] - 2024-04-22
+--------------------
+
+### Other Changes
+
+- refactor: clear net config from initrd via NM config (#156)
+
 [1.2.18] - 2024-04-04
 --------------------
 
