@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: MIT
+---
+# Put internal variables here with CentOS 10 specific values.
+
+__nbde_client_packages:
+  - clevis
+  - clevis-dracut
+  - clevis-luks
+  - clevis-systemd
+  - iproute
+  - NetworkManager
+
+__nbde_client_initramfs_update_cmd: >
+  dracut -fv --regenerate-all
+
+__nbde_client_dracut_settings:
+  - kernel_cmdline+=" rd.neednet=1 "
+  - omit_dracutmodules+=" ifcfg "
+
+__nbde_client_clear_initrd_netcfg_strategy: networkmanager_config
+
+# vim:set ts=2 sw=2 et:
