@@ -70,7 +70,7 @@
             url: http://localhost/adv
             force: true
             dest: "{{ nbde_client_temp_adv.path }}"
-            mode: 0600
+            mode: "0600"
 
         - name: Add binding to slot 1
           shell: >
