@@ -17,19 +17,25 @@
         - name: Use nbde_client role
           include_role:
             name: linux-system-roles.nbde_client
+            public: true
 
         - name: Check ansible_managed, fingerprint in generated files
           include_tasks: tasks/check_header.yml
-          loop:
-            - /etc/dracut.conf.d/nbde_client.conf
-            - /usr/bin/nbde_client-network-flush
-            - /etc/systemd/system/nbde_client-network-flush.service
-            - /usr/lib/dracut/modules.d/60nbde_client/module-setup.sh
-            - /usr/lib/dracut/modules.d/60nbde_client/nbde_client-hook.sh
+          loop: "{{
+            (__nbde_client_clear_initrd_netcfg_strategy == 'dracut_module') |
+            ternary(__dracut_files, __nm_files) | list }}"
           loop_control:
             loop_var: __file
           vars:
             __fingerprint: "system_role:nbde_client"
+            __dracut_files:  # files created by the dracut implementation
+              - /etc/dracut.conf.d/nbde_client.conf
+              - /usr/bin/nbde_client-network-flush
+              - /etc/systemd/system/nbde_client-network-flush.service
+              - /usr/lib/dracut/modules.d/60nbde_client/module-setup.sh
+              - /usr/lib/dracut/modules.d/60nbde_client/nbde_client-hook.sh
+            __nm_files:  # files created by the NM implementation
+              - /etc/dracut.conf.d/nbde_client.conf
 
         - name: Attempt to unlock device
           include_tasks: tasks/verify_unlock_device.yml
