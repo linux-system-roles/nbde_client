@@ -3,6 +3,9 @@
 # The provider for nbde_client role. Currently 'clevis' is supported.
 nbde_client_provider: clevis
 
+# Deploy mechanisms for opening the volume on boot
+nbde_early_boot: true
+
 # nbde_client_bindings is a list of dictionary. Please refer to the README
 # for details on the supported keys.
 
