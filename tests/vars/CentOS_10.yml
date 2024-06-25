@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MIT
+---
+# Put tests variables here with CentOS 9 specific values.
+
+nbde_client_test_packages:
+  - cryptsetup
+
+# vim:set ts=2 sw=2 et:
