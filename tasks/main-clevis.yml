@@ -20,7 +20,7 @@
     dest: /etc/dracut.conf.d/nbde_client.conf
     owner: root
     mode: '0444'
-  when: nbde_client_early_boot
+  when: nbde_client_early_boot | bool
 
 - name: Check whether devices are at the desired state
   when:
@@ -85,6 +85,6 @@
   include_tasks: clear_initrd_netcfg-{{ __nbde_client_clear_initrd_netcfg_strategy }}.yml
   when:
     - __nbde_client_clear_initrd_netcfg_strategy is defined
-    - nbde_client_early_boot
+    - nbde_client_early_boot | bool
 
 # vim:set ts=2 sw=2 et:
