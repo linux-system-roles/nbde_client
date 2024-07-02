@@ -59,7 +59,7 @@ SOFTWARE.
   <style type="text/css">code{white-space: pre;}</style>
   <style type="text/css">
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -70,7 +70,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
   { counter-reset: source-line 0; }
@@ -173,24 +173,32 @@ not supported as of now.</p>
 <p>These are the variables that can be passed to the role:</p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th><strong>Variable</strong></th>
 <th><strong>Default/Choices</strong></th>
 <th><strong>Description</strong></th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><code>nbde_client_provider</code></td>
 <td><code>clevis</code></td>
 <td>identifies the provider for the <code>nbde_client</code> role. We
 currently support <code>clevis</code>.</td>
 </tr>
-<tr class="even">
+<tr>
 <td><code>nbde_client_bindings</code></td>
 <td></td>
 <td>a list containing binding configurations, which include e.g. devices
 and slots.</td>
+</tr>
+<tr>
+<td><code>nbde_client_early_boot</code></td>
+<td><code>true</code></td>
+<td>by default nbde_client will configure the initrd to unlock the
+volume. This may need to be disabled if the managed host is using static
+IP addressing, or if the volume should be unlocked by
+clevis-luks-askpass</td>
 </tr>
 </tbody>
 </table>
@@ -199,35 +207,35 @@ and slots.</td>
 support the following keys:</p>
 <table>
 <thead>
-<tr class="header">
+<tr>
 <th><strong>Name</strong></th>
 <th><strong>Default/Choices</strong></th>
 <th><strong>Description</strong></th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><code>device</code></td>
 <td></td>
 <td>specifies the path of the backing device of an encrypted device on
 the managed host. This device must be already configured as a LUKS
 device before using the role (<strong>REQUIRED</strong>).</td>
 </tr>
-<tr class="even">
+<tr>
 <td><code>encryption_password</code></td>
 <td></td>
 <td>a valid password or passphrase for opening/unlocking the specified
 device. Recommend vault encrypting the value. See <a
 href="https://docs.ansible.com/ansible/latest/user_guide/vault.html">https://docs.ansible.com/ansible/latest/user_guide/vault.html</a></td>
 </tr>
-<tr class="odd">
+<tr>
 <td><code>encryption_key_src</code></td>
 <td></td>
 <td>either the absolute or relative path, on the control node, of a file
 containing an encryption key valid for opening/unlocking the specified
 device. The role will copy this file to the managed node(s).</td>
 </tr>
-<tr class="even">
+<tr>
 <td><code>state</code></td>
 <td><strong>present</strong> / absent</td>
 <td>specifies whether a binding with the configuration described should
@@ -235,18 +243,18 @@ be added or removed. Setting state to present (the default) means a
 binding will be added; setting state to absent means a binding will be
 removed from the device/slot.</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><code>slot</code></td>
 <td><code>1</code></td>
 <td>specifies the slot to use for the binding.</td>
 </tr>
-<tr class="even">
+<tr>
 <td><code>servers</code></td>
 <td></td>
 <td>specifies a list of servers to bind to. To enable high availability,
 specify more than one server here.</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><code>threshold</code></td>
 <td><code>1</code></td>
 <td>specifies the threshold for the Shamir Secret Sharing (SSS) scheme
@@ -255,7 +263,7 @@ multiple servers, threshold indicates how many of those servers should
 succeed, in terms of decryption, in order to complete the process of
 recovering the LUKS passphrase to open the device.</td>
 </tr>
-<tr class="even">
+<tr>
 <td><code>password_temporary</code></td>
 <td><code>false</code></td>
 <td>If <code>true</code>, the password or passphrase that was provided
