@@ -1,6 +1,22 @@
 Changelog
 =========
 
+[1.3.0] - 2024-07-02
+--------------------
+
+### New Features
+
+- feat: Allow initrd configuration to be skipped (#165)
+
+### Bug Fixes
+
+- fix: add support for EL10 (#166)
+
+### Other Changes
+
+- test: some files not created by nm implementation (#164)
+- ci: ansible-lint action now requires absolute directory (#167)
+
 [1.2.20] - 2024-06-11
 --------------------
 
