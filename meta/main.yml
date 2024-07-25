@@ -3,7 +3,6 @@
 galaxy_info:
   author: Sergio Correia <scorreia@redhat.com>
   description: Ansible role for configuring Network-Bound Disk Encryption clients (e.g. clevis)
-
   company: Red Hat, Inc.
   license: MIT
   min_ansible_version: "2.9"
