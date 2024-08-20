@@ -1,0 +1,7 @@
+---
+__nbde_client_packages:
+  - clevis
+  - clevis-luks
+  - clevis-systemd
+
+nbde_client_early_boot: false
