@@ -4,7 +4,7 @@
 # Copyright: (c) 2020, Sergio Correia <scorreia@redhat.com>
 # SPDX-License-Identifier: MIT
 #
-""" This module is used for handling some operations related to clevis. """
+"""This module is used for handling some operations related to clevis."""
 
 from __future__ import absolute_import, division, print_function
 
