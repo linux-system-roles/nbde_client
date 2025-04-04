@@ -3,5 +3,6 @@
 # Put the tests internal variables here that are not distribution specific.
 
 nbde_client_test_device: /tmp/.nbde_client_dev_test
+nbde_client_test_device_luks1: /tmp/.nbde_client_dev_test_luks1
 
 # vim:set ts=2 sw=2 et:

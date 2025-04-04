@@ -1,0 +1,72 @@
+---
+- name: Bind with passphrase repeatedly until it fails or slot is 7
+  block:
+    - name: Select next slot
+      set_fact:
+        nbde_client_test_slot: "{{ nbde_client_test_slot | int + 1 }}"
+
+    - name: Display selected slot
+      debug:
+        msg: Selected slot is {{ nbde_client_test_slot }}
+
+    - name: Gather device checksum BEFORE binding operation
+      shell: >
+        set -euo pipefail;
+        sha256sum "{{ nbde_client_selected_device }}" | cut -f1 -d' '
+      changed_when: false
+      register: nbde_client_device_checksum_before
+
+    - name: Perform binding with nbde_client role
+      include_role:
+        name: linux-system-roles.nbde_client
+        public: true
+      vars:
+        nbde_client_bindings:
+          - device: "{{ nbde_client_selected_device }}"
+            slot: "{{ nbde_client_test_slot }}"
+            encryption_password: "{{ nbde_client_test_pass }}"
+            servers:
+              - http://localhost
+              - http://localhost
+              - http://localhost
+
+    - name: Attempt to unlock device
+      include_tasks: verify_unlock_device.yml
+
+    - name: Make sure the attempt to unlock succeeded
+      assert:
+        that:
+          - not nbde_client_unlock.failed
+          - not nbde_client_close.failed
+
+  rescue:
+    - name: Set nbde_client_failed_binding to indicate a binding failed to be added
+      set_fact:
+        nbde_client_failed_binding: true
+
+    - name: Gather device checksum AFTER failed binding operation
+      shell: >
+        set -euo pipefail;
+        sha256sum "{{ nbde_client_selected_device }}" | cut -f1 -d' '
+      changed_when: false
+      register: nbde_client_device_checksum_after
+
+    - name: Show checksums for comparison
+      debug:
+        msg: |
+          Checksum BEFORE: {{ nbde_client_device_checksum_before.stdout }}
+          Checksum AFTER:  {{ nbde_client_device_checksum_after.stdout }}
+
+    - name: Make sure the checksum from BEFORE and AFTER matches when binding fails
+      assert:
+        that:
+          - nbde_client_device_checksum_before.stdout == nbde_client_device_checksum_after.stdout
+
+  always:
+    - name: Include this same task if it has not failed yet and slot is less than 7
+      when:
+        - nbde_client_test_slot|int < 8
+        - nbde_client_failed_binding is false
+      include_tasks: bind_slot_with_passphrase.yml
+
+# vim:set ts=2 sw=2 et:

@@ -155,7 +155,7 @@ def initialize_device(module, luks_type, device):
     return None
 
 
-def get_luks_type(module, device, initialize=True):
+def get_luks_type(module, device):
     """Get the LUKS type of the device.
     Return: <luks type> <error>"""
 
@@ -169,10 +169,7 @@ def get_luks_type(module, device, initialize=True):
         args = ["cryptsetup", "isLuks", "--type", luks, device]
         ret_code, _unused1, _unused2 = module.run_command(args)
         if ret_code == 0:
-            err = None
-            if initialize:
-                err = initialize_device(module, luks, device)
-            return luks, err
+            return luks, None
 
     # We did not identify device as either LUKS1 or LUKS2.
     return None, {"msg": "Not possible to detect whether LUKS1 or LUKS2"}
@@ -254,11 +251,11 @@ def get_jwe_luks2(module, device, slot):
     return jwe, token_id, None
 
 
-def get_jwe(module, device, slot, initialize=True):
+def get_jwe(module, device, slot):
     """Get a clevis JWE from a given device and slot.
     Return: <jwe> <error>"""
 
-    luks, err = get_luks_type(module, device, initialize)
+    luks, err = get_luks_type(module, device)
     if err:
         return None, err
 
@@ -440,7 +437,7 @@ def keyslots_in_use(module, device):
     else:
         slots, err = parse_keyslots_luks2(luks_dump)
 
-    if err:
+    if err or not slots:
         return None, err
     return sorted(slots), None
 
@@ -450,7 +447,7 @@ def bound_slots(module, device):
     Return: <bound slots> <error>"""
 
     slots, err = keyslots_in_use(module, device)
-    if err:
+    if err or not slots:
         return None, err
 
     # Now let's iterate through these slots and collect the bound ones.
@@ -556,7 +553,7 @@ def retrieve_passphrase(module, device):
     Return: <slot> <passphrase> <error>"""
 
     slots, err = bound_slots(module, device)
-    if err:
+    if err or not slots:
         return None, None, err
 
     for slot in slots:
@@ -588,12 +585,27 @@ def save_slot_luks1(module, **kwargs):
     if len(kwargs["data"]) == 0:
         return False, {"msg": "We need data to save to a slot"}
 
-    bound, _unused = is_slot_bound(module, kwargs["device"], kwargs["slot"])
+    # CVE-2025-11568: Validate metadata size to prevent overflow in LUKS1 gap.
+    # LUKS1 has limited gap space (~512KB shared across 8 slots), so we enforce
+    # a 64KB per-slot limit to prevent corruption of encrypted data.
+    MAX_LUKSMETA_SIZE = 65536  # 64KB limit
+    data_size = len(kwargs["data"])
 
-    backup, err = backup_luks1_device(module, kwargs["device"])
+    if data_size > MAX_LUKSMETA_SIZE:
+        errmsg = (
+            "Metadata size ({0} bytes) exceeds maximum allowed size "
+            "({1} bytes) for LUKS1 device {2}".format(
+                data_size, MAX_LUKSMETA_SIZE, kwargs["device"]
+            )
+        )
+        return False, {"msg": errmsg}
+
+    # Make sure device is initialized.
+    err = initialize_device(module, "luks1", kwargs["device"])
     if err:
         return False, err
 
+    bound, _unused = is_slot_bound(module, kwargs["device"], kwargs["slot"])
     if bound:
         if not kwargs["overwrite"]:
             errmsg = "{0}:{1} is already bound and no overwrite set".format(
@@ -629,14 +641,11 @@ def save_slot_luks1(module, **kwargs):
         args, data=kwargs["data"], binary_data=True
     )
     if ret_code != 0:
-        if bound:
-            restore_luks1_device(module, kwargs["device"], backup)
         return False, {"msg": stderr}
 
     # Now make sure we can read the data properly.
     new_data, err = get_jwe_luks1(module, kwargs["device"], kwargs["slot"])
     if err or new_data != kwargs["data"]:
-        restore_luks1_device(module, kwargs["device"], backup)
         errmsg = "Error adding JWE to {0}:{1} ; no changes performed".format(
             kwargs["device"], kwargs["slot"]
         )
@@ -645,62 +654,193 @@ def save_slot_luks1(module, **kwargs):
     return True, None
 
 
-def backup_luks1_device(module, device):
-    """Backup LUKSmeta metadata from LUKS1 device, as it can be corrupted when
-    saving new metadata.
-    Return: <backup> <error>"""
+def get_luks1_payload_offset(module, device):
+    """Get payload offset from cryptsetup luksDump for LUKS1 device.
+    Return: <offset_in_sectors> <error>"""
 
-    bound, err = bound_slots(module, device)
-    if err:
-        return None, err
+    ret_code, stdout, stderr = module.run_command(["cryptsetup", "luksDump", device])
+    if ret_code != 0:
+        return None, {"msg": "Failed to dump LUKS info: {}".format(stderr)}
 
-    backup = {}
-    for slot in bound:
-        args = ["luksmeta", "load", "-d", device, "-s", str(slot), "-u", CLEVIS_UUID]
-        ret_code, data, stderr = module.run_command(args)
-        if ret_code != 0:
-            return None, {"msg": stderr}
-        backup[slot] = data
-    return backup, None
+    # Look for "Payload offset:" line
+    for line in stdout.split("\n"):
+        if "Payload offset:" in line:
+            # Extract number from "Payload offset: 4096 [sectors]"
+            match = re.search(r"Payload offset:\s+(\d+)", line)
+            if match:
+                return int(match.group(1)), None
+
+    return None, {"msg": "Could not find payload offset in LUKS dump"}
 
 
-def restore_luks1_device(module, device, backup):
-    """Restore LUKSmeta metadata from the specified backup.
+def backup_luks1_gap_area(module, device, payload_offset_sectors):
+    """Backup everything from start of device until encrypted data starts.
+    This includes the full LUKS1 header plus any gap area with LUKSmeta data.
+    Return: <header_and_gap_data> <error>"""
+
+    # Backup from sector 0 to payload_offset_sectors (everything before encrypted data)
+    args = [
+        "dd",
+        "if={}".format(device),
+        "count={}".format(payload_offset_sectors),
+        "bs=512",
+        "status=none",
+    ]
+
+    ret_code, header_and_gap_data, stderr = module.run_command(args, binary_data=True)
+    if ret_code != 0:
+        return None, {"msg": "Failed to backup header and gap area: {}".format(stderr)}
+
+    return header_and_gap_data, None
+
+
+def restore_luks1_gap_area(module, device, payload_offset_sectors, header_and_gap_data):
+    """Restore everything from start of device until encrypted data starts.
+    This restores the full LUKS1 header plus any gap area with LUKSmeta data.
     Return: <error>"""
 
-    args = ["luksmeta", "init", "-f", "-d", device]
-    ret_code, _unused, stderr = module.run_command(args)
-    if ret_code != 0:
-        return {"msg": stderr}
+    if not header_and_gap_data:
+        return {"msg": "No header and gap data to restore"}
 
-    for slot in backup:
-        _unused, err = save_slot_luks1(
-            module, device=device, slot=slot, data=backup[slot], overwrite=True
-        )
-        if err:
-            return err
+    # Restore from sector 0 to payload_offset_sectors (everything before encrypted data)
+    args = [
+        "dd",
+        "of={}".format(device),
+        "count={}".format(payload_offset_sectors),
+        "bs=512",
+        "conv=notrunc",
+        "status=none",
+    ]
+
+    ret_code, _unused, stderr = module.run_command(
+        args, data=header_and_gap_data, binary_data=True
+    )
+    if ret_code != 0:
+        return {"msg": "Failed to restore header and gap area: {}".format(stderr)}
 
     return None
 
 
-def backup_luks2_token(module, device, token_id):
-    """Backup LUKS2 token, as we may need to restore the metadata.
+def backup_luks1_device(module, device):
+    """Backup LUKS1 header and gap area using dd for byte-perfect restoration.
+    This preserves the exact state of the LUKSmeta area, including whether
+    it was initialized or not.
     Return: <backup> <error>"""
 
-    args = ["cryptsetup", "token", "export", "--token-id", token_id, device]
-    ret, token, err = module.run_command(args)
-    if ret != 0:
-        return None, {"msg": "Error during token backup: {0}".format(err)}
+    # Get payload offset to determine how much to backup
+    payload_offset, err = get_luks1_payload_offset(module, device)
+    if err:
+        return None, err
 
-    try:
-        token_json = json.loads(token)
-    except ValueError as exc:
-        return None, {"msg": str(exc)}
-    return token_json, None
+    # Backup everything from start of device until encrypted data starts
+    header_and_gap_data, err = backup_luks1_gap_area(module, device, payload_offset)
+    if err:
+        return None, err
+
+    backup = {"payload_offset": payload_offset, "gap_data": header_and_gap_data}
+
+    return backup, None
+
+
+def restore_luks1_device(module, device, gap_backup):
+    """Restore LUKS1 header and gap area using dd for byte-perfect restoration.
+    This restores the exact state of the LUKSmeta area as it was before.
+    Return: <error>"""
+
+    if (
+        not gap_backup
+        or "payload_offset" not in gap_backup
+        or "gap_data" not in gap_backup
+    ):
+        return {"msg": "Invalid gap backup data"}
+
+    payload_offset = gap_backup["payload_offset"]
+    gap_data = gap_backup["gap_data"]
+
+    # Restore everything from start of device until encrypted data starts
+    result = restore_luks1_gap_area(module, device, payload_offset, gap_data)
+
+    return result
+
+
+def backup_luks_device(module, device):
+    """Backup LUKS device header, as we may need to restore it upon
+       a failed binding procedure.
+    Return: <backup> <error>"""
+
+    # If LUKS1, we will backup everything from the beginning of the device
+    # until the encrypted data. That will cover the LUKS1 header + the gap
+    # that contains the LUKSmeta data. for LUKS2, merely saving the header
+    # also saves the associated tokens.
+    luks, err = get_luks_type(module, device)
+    if err:
+        return None, err
+
+    if luks == "luks1":
+        luks1_backup, err = backup_luks1_device(module, device)
+        if err:
+            return None, err
+        return luks1_backup, None
+
+    # For LUKS2, cryptsetup luksHeaderBackup/luksHeaderRestore is enough.
+    header_backup = os.path.join(module.params["data_dir"], "header")
+    args = [
+        "cryptsetup",
+        "luksHeaderBackup",
+        device,
+        "--batch-mode",
+        "--header-backup-file",
+        header_backup,
+    ]
+    ret, _unused, stderr = module.run_command(args)
+    if ret != 0:
+        return None, {"msg": stderr}
+    return header_backup, None
+
+
+def restore_luks_device(module, device, backup):
+    """Restore the LUKS device, the header and, if applicable
+       the LUKSMeta metadata.
+    Return: <error>"""
+
+    # Let's make sure the header backup exists.
+    if not backup:
+        return {"msg": "Error during rollback: invalid backup data"}
+
+    # If LUKS1, we need to manually restore the backup with the header
+    # plus the LUKSMeta data.
+    luks, err = get_luks_type(module, device)
+    if err:
+        return err
+
+    if luks == "luks1":
+        err = restore_luks1_device(module, device, backup)
+        if err:
+            return err
+        return None
+
+    # For LUKS2, we use cryptsetup luksHeaderRestore, and backup is the
+    # header to be restored.
+    if not os.path.isfile(backup):
+        return {"msg": "Error during rollback: invalid LUKS header backup"}
+
+    # Now we can restore the header.
+    args = [
+        "cryptsetup",
+        "luksHeaderRestore",
+        device,
+        "--batch-mode",
+        "--header-backup-file",
+        backup,
+    ]
+    ret, _unused, stderr = module.run_command(args)
+    if ret != 0:
+        return {"msg": "Error during rollback: {}".format(stderr)}
+    return None
 
 
 def import_luks2_token(module, device, token):
-    """Restore LUKS2 token.
+    """Store a given LUKS2 token to a device.
     Return: <error>"""
 
     if not token or len(token) == 0:
@@ -726,7 +866,7 @@ def make_luks2_token(slot, data):
     try:
         metadata = {"type": "clevis", "keyslots": [str(slot)], "jwe": json.loads(data)}
     except ValueError as exc:
-        return False, {"msg": "Error making new token: {0}".format(str(exc))}
+        return None, {"msg": "Error making new token: {0}".format(str(exc))}
 
     return metadata, None
 
@@ -765,10 +905,6 @@ def save_slot_luks2(module, **kwargs):
             )
             return False, {"msg": errmsg}
 
-        old_data, err = backup_luks2_token(module, kwargs["device"], token_id)
-        if err:
-            return False, err
-
         args = [
             "cryptsetup",
             "token",
@@ -783,16 +919,14 @@ def save_slot_luks2(module, **kwargs):
 
     jwe, err = format_jwe(module, kwargs["data"], False)
     if err:
-        import_luks2_token(module, kwargs["device"], old_data)
         return False, {"msg": "Error preparing JWE: {0}".format(err["msg"])}
 
     token, err = make_luks2_token(kwargs["slot"], jwe)
-    if err:
+    if err or not token:
         return False, err
 
     err = import_luks2_token(module, kwargs["device"], token)
     if err:
-        import_luks2_token(module, kwargs["device"], old_data)
         return False, err
 
     # Now the test to see if we stored the correct data.
@@ -813,7 +947,6 @@ def save_slot_luks2(module, **kwargs):
         ]
         module.run_command(args)
 
-        import_luks2_token(module, kwargs["device"], old_data)
         errmsg = "Error storing token: {0} / {1}".format(kwargs["data"], metadata)
         return False, {"msg": errmsg}
 
@@ -843,7 +976,7 @@ def is_keyslot_in_use(module, device, slot):
     Return: <boolean>"""
 
     slots, err = keyslots_in_use(module, device)
-    if err:
+    if err or not slots:
         return False
     return str(slot) in slots
 
@@ -1098,18 +1231,15 @@ def discard_passphrase(module, **kwargs):
 
 
 def prepare_to_rebind(module, device, slot):
-    """Backups metadata from device and also remove it, in preparation for a
-    rebind operation.
-    Return <backup> <error>"""
+    """Prepares the device + slot for a rebinding. The device is already
+    backup'ed and can be restored if things go wrong.
+    Return <error>"""
 
     luks_type, err = get_luks_type(module, device)
     if err:
-        return None, err
+        return err
 
     if luks_type == "luks1":
-        backup, err = backup_luks1_device(module, device)
-        if err:
-            return None, err
         args = [
             "luksmeta",
             "wipe",
@@ -1125,28 +1255,12 @@ def prepare_to_rebind(module, device, slot):
         _unused, token_id, err = get_jwe_luks2(module, device, slot)
         if err:
             return err
-        backup, err = backup_luks2_token(module, device, token_id)
-        if err:
-            return None, err
         args = ["cryptsetup", "token", "remove", "--token-id", token_id, device]
 
-    ret, _unused, err = module.run_command(args)
+    ret, _unused, stderr = module.run_command(args)
     if ret != 0:
-        return None, {"msg": err}
-    return backup, None
-
-
-def restore_failed_rebind(module, device, backup):
-    """Restore metadata after a failed rebind operation.
-    Return <error>"""
-
-    luks_type, err = get_luks_type(module, device)
-    if err:
-        return None, err
-
-    if luks_type == "luks1":
-        return restore_luks1_device(module, device, backup)
-    return import_luks2_token(module, device, backup)
+        return {"msg": stderr}
+    return None
 
 
 def get_valid_passphrase(module, **kwargs):
@@ -1202,6 +1316,12 @@ def bind_slot(module, **kwargs):
     if err:
         return False, err
 
+    # At this point, we backup the device for later restoration, if binding
+    # fails.
+    backup, err = backup_luks_device(module, kwargs["device"])
+    if err:
+        return False, err
+
     passphrase, is_keyfile, err = get_valid_passphrase(module, **kwargs)
     if err:
         return False, err
@@ -1214,18 +1334,20 @@ def bind_slot(module, **kwargs):
         # means discard_pw should be false.
         discard_pw = passphrase == kwargs.get("passphrase", None)
 
-    # At this point we can proceed to bind.
     key, jwe, err = new_pass_jwe(
         module, kwargs["device"], kwargs["auth"], kwargs["auth_cfg"]
     )
     if err:
         return False, err
 
+    # At this point we can proceed to bind, after backing up the device.
+
     bound, _unused = is_slot_bound(module, kwargs["device"], kwargs["slot"])
 
     if bound:
-        backup, err = prepare_to_rebind(module, kwargs["device"], kwargs["slot"])
+        err = prepare_to_rebind(module, kwargs["device"], kwargs["slot"])
         if err:
+            restore_luks_device(module, kwargs["device"], backup)
             return False, err
 
     # We add the key first because it will be referenced by the metadata.
@@ -1239,15 +1361,19 @@ def bind_slot(module, **kwargs):
     )
 
     if err:
-        if bound:
-            restore_failed_rebind(module, kwargs["device"], backup)
+        restore_luks_device(module, kwargs["device"], backup)
         return False, err
 
     _unused, err = save_slot(
-        module, device=kwargs["device"], slot=kwargs["slot"], data=jwe, overwrite=True
+        module,
+        device=kwargs["device"],
+        slot=kwargs["slot"],
+        data=jwe,
+        overwrite=True,
     )
 
     if err:
+        restore_luks_device(module, kwargs["device"], backup)
         return False, err
 
     # Check if we should discard the valid passphrase we used
@@ -1363,7 +1489,7 @@ def decode_pin_config(module, jwe):
     Return <pin> <policy> <keys> <error>"""
 
     jwe_json, err = decode_jwe(module, jwe)
-    if err:
+    if err or not jwe_json:
         return None, None, {}, err
 
     if "clevis" not in jwe_json or "pin" not in jwe_json["clevis"]:
@@ -1395,7 +1521,7 @@ def already_bound(module, **kwargs):
     slot = kwargs["slot"]
 
     # Check #1 - verify whether we have clevis JWE in the slot.
-    jwe, err = get_jwe(module, device, slot, False)
+    jwe, err = get_jwe(module, device, slot)
     if err:
         return False
 

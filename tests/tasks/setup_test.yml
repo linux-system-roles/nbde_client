@@ -60,12 +60,24 @@
   command: fallocate -l64m {{ nbde_client_test_device }}
   changed_when: false
 
-- name: Format test device as LUKS
+- name: Create LUKS1 device for testing
+  command: fallocate -l64m {{ nbde_client_test_device_luks1 }}
+  changed_when: false
+
+- name: Format test device as LUKS (LUKS2 with modern cryptsetup)
   shell: >-
     set -euo pipefail;
     echo -n {{ nbde_client_test_pass }} |
     cryptsetup luksFormat --pbkdf pbkdf2 --pbkdf-force-iterations 1000
     --batch-mode --force-password {{ nbde_client_test_device }}
+  changed_when: false
+
+- name: Format another test device as LUKS1
+  shell: >-
+    set -euo pipefail;
+    echo -n {{ nbde_client_test_pass }} |
+    cryptsetup luksFormat --type luks1 --pbkdf-force-iterations 1000
+    --batch-mode --force-password {{ nbde_client_test_device_luks1 }}
   changed_when: false
 
 - name: Create key file for test device
