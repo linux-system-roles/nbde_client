@@ -3,6 +3,9 @@
   file:
     path: "{{ nbde_client_test_device }}"
     state: absent
+  loop:
+    - "{{ nbde_client_test_device }}"       # LUKS2 (with modern cryptsetup).
+    - "{{ nbde_client_test_device_luks1 }}" # LUKS1.
 
 - name: Clean up test dir on controller
   file:
