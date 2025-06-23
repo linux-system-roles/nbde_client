@@ -9,8 +9,8 @@
             name: linux-system-roles.nbde_client
         - name: Assert that the role declares all parameters in defaults
           assert:
-            that: "{{ item }} is defined"
-          loop:
-            - nbde_client_provider
-            - nbde_client_bindings
+            that:
+              - nbde_client_provider is defined
+              - nbde_client_bindings is defined
+
 # vim:set ts=2 sw=2 et:

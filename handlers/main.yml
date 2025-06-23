@@ -4,7 +4,7 @@
 - name: Handle nbde_client update initramfs
   when:
     - __nbde_client_update_initramfs | bool
-    - __nbde_client_initramfs_update_cmd | default("")
+    - __nbde_client_initramfs_update_cmd | default("") | length > 0
   command: "{{ __nbde_client_initramfs_update_cmd }}"
   changed_when: false
 

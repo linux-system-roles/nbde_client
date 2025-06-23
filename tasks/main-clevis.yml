@@ -24,7 +24,7 @@
 
 - name: Check whether devices are at the desired state
   when:
-    - nbde_client_bindings | default([])
+    - nbde_client_bindings | default([]) | length > 0
   nbde_client_clevis:
     bindings: "{{ nbde_client_bindings | default([]) }}"
   check_mode: true
@@ -41,7 +41,7 @@
         state: directory
         suffix: nbde_client_encryption_keys
       when:
-        - nbde_client_bindings | default([])
+        - nbde_client_bindings | default([]) | length > 0
       register: nbde_client_tempdir
 
     - name: Ensure we transfer key files
@@ -51,7 +51,7 @@
         mode: '0400'
       when:
         - nbde_client_tempdir.path is defined
-        - item.encryption_key_src | default("")
+        - item.encryption_key_src | default("") | length > 0
       loop: "{{ nbde_client_bindings }}"
       loop_control:
         label: "{{ item.encryption_key_src | default('') }}"
@@ -59,7 +59,7 @@
 
     - name: Perform clevis operations
       when:
-        - nbde_client_bindings | default([])
+        - nbde_client_bindings | default([]) | length > 0
         - nbde_client_tempdir.path is defined
       nbde_client_clevis:
         bindings: "{{ nbde_client_bindings | default([]) }}"
@@ -78,7 +78,7 @@
         path: "{{ nbde_client_tempdir.path }}"
         state: absent
       when:
-        - nbde_client_bindings | default([])
+        - nbde_client_bindings | default([]) | length > 0
         - nbde_client_tempdir.path is defined
 
 - name: Deploy mechanism to clear network configuration generated during early boot
