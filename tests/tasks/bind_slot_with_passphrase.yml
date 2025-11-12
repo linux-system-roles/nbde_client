@@ -65,8 +65,8 @@
   always:
     - name: Include this same task if it has not failed yet and slot is less than 7
       when:
-        - nbde_client_test_slot|int < 8
-        - nbde_client_failed_binding is false
+        - nbde_client_test_slot | int < 8
+        - not nbde_client_failed_binding
       include_tasks: bind_slot_with_passphrase.yml
 
 # vim:set ts=2 sw=2 et:
