@@ -6,6 +6,12 @@
     - name: Set up test environment
       include_tasks: tasks/setup_test.yml
 
+    - name: Get the contents of the tang directory before adding keys
+      find:
+        path: /var/db/tang/
+        patterns: "*.jwk"
+      register: tang_dir_contents_before
+
     # For this test we will create many tang keys, so that the metadata
     # generated will be too large that it will not fit the LUKS header
     # after a few binding attempts.
@@ -14,20 +20,44 @@
       changed_when: false
       with_sequence: count=32
 
-    # Now we will attempt to perform multiple binding operations, and at some
-    # point it will fail, due to the metadata being too large. We will also
-    # calculate the checksum of the device before each attempt, and, in case
-    # the binding fails, we will compare the after checksum to check whether
-    # any changes were performed, in these failed scenarios.
-    - name: Run the test for each device type
-      include_tasks: tasks/bind_repeatedly_single_device.yml
-      loop:
-        - "{{ nbde_client_test_device }}"       # LUKS2 (with modern cryptsetup).
-        - "{{ nbde_client_test_device_luks1 }}" # LUKS1.
-      loop_control:
-        loop_var: nbde_client_selected_device
+    - name: Run the test
+      block:
+        # Now we will attempt to perform multiple binding operations, and at some
+        # point it will fail, due to the metadata being too large. We will also
+        # calculate the checksum of the device before each attempt, and, in case
+        # the binding fails, we will compare the after checksum to check whether
+        # any changes were performed, in these failed scenarios.
+        - name: Run the test for each device type
+          include_tasks: tasks/bind_repeatedly_single_device.yml
+          loop:
+            - "{{ nbde_client_test_device }}"       # LUKS2 (with modern cryptsetup).
+            - "{{ nbde_client_test_device_luks1 }}" # LUKS1.
+          loop_control:
+            loop_var: nbde_client_selected_device
 
-    - name: Clean up test environment
-      include_tasks: tasks/cleanup_test.yml
+      always:
+        - name: Get the contents of the tang directory after adding keys
+          find:
+            path: /var/db/tang/
+            patterns: "*.jwk"
+          register: tang_dir_contents_after
+
+        - name: Remove any keys added during the test
+          file:
+            path: "{{ item }}"
+            state: absent
+          loop: "{{ tang_dir_contents_after.files | map(attribute='path') | list |
+            difference(tang_dir_contents_before.files | map(attribute='path') | list) }}"
+
+        - name: Ensure directory is same as before
+          find:
+            path: /var/db/tang/
+            patterns: "*.jwk"
+          register: tang_dir_contents_final
+          failed_when: tang_dir_contents_before.files | map(attribute='path') | list |
+            difference(tang_dir_contents_final.files | map(attribute='path') | list) | list | length > 0
+
+        - name: Clean up test environment
+          include_tasks: tasks/cleanup_test.yml
 
 # vim:set ts=2 sw=2 et:
