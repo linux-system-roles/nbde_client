@@ -13,6 +13,6 @@
 
 - name: Verify the binding failed to be added at least once
   assert:
-    that: nbde_client_failed_binding is true
+    that: nbde_client_failed_binding
 
 # vim:set ts=2 sw=2 et:
