@@ -660,7 +660,7 @@ def get_luks1_payload_offset(module, device):
 
     ret_code, stdout, stderr = module.run_command(["cryptsetup", "luksDump", device])
     if ret_code != 0:
-        return None, {"msg": "Failed to dump LUKS info: {}".format(stderr)}
+        return None, {"msg": "Failed to dump LUKS info: {0}".format(stderr)}
 
     # Look for "Payload offset:" line
     for line in stdout.split("\n"):
@@ -681,15 +681,15 @@ def backup_luks1_gap_area(module, device, payload_offset_sectors):
     # Backup from sector 0 to payload_offset_sectors (everything before encrypted data)
     args = [
         "dd",
-        "if={}".format(device),
-        "count={}".format(payload_offset_sectors),
+        "if={0}".format(device),
+        "count={0}".format(payload_offset_sectors),
         "bs=512",
         "status=none",
     ]
 
     ret_code, header_and_gap_data, stderr = module.run_command(args, binary_data=True)
     if ret_code != 0:
-        return None, {"msg": "Failed to backup header and gap area: {}".format(stderr)}
+        return None, {"msg": "Failed to backup header and gap area: {0}".format(stderr)}
 
     return header_and_gap_data, None
 
@@ -705,8 +705,8 @@ def restore_luks1_gap_area(module, device, payload_offset_sectors, header_and_ga
     # Restore from sector 0 to payload_offset_sectors (everything before encrypted data)
     args = [
         "dd",
-        "of={}".format(device),
-        "count={}".format(payload_offset_sectors),
+        "of={0}".format(device),
+        "count={0}".format(payload_offset_sectors),
         "bs=512",
         "conv=notrunc",
         "status=none",
@@ -716,7 +716,7 @@ def restore_luks1_gap_area(module, device, payload_offset_sectors, header_and_ga
         args, data=header_and_gap_data, binary_data=True
     )
     if ret_code != 0:
-        return {"msg": "Failed to restore header and gap area: {}".format(stderr)}
+        return {"msg": "Failed to restore header and gap area: {0}".format(stderr)}
 
     return None
 
@@ -835,7 +835,7 @@ def restore_luks_device(module, device, backup):
     ]
     ret, _unused, stderr = module.run_command(args)
     if ret != 0:
-        return {"msg": "Error during rollback: {}".format(stderr)}
+        return {"msg": "Error during rollback: {0}".format(stderr)}
     return None
 
 
