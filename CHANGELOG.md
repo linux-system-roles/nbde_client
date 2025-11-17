@@ -1,6 +1,17 @@
 Changelog
 =========
 
+[1.3.6] - 2025-11-17
+--------------------
+
+### Bug Fixes
+
+- fix: cannot use community-general version 12 - no py27 and py36 support (#224)
+
+### Other Changes
+
+- refactor: do not use automatic format strings (#225)
+
 [1.3.5] - 2025-11-13
 --------------------
 
