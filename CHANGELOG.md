@@ -1,6 +1,14 @@
 Changelog
 =========
 
+[1.3.8] - 2026-01-28
+--------------------
+
+### Other Changes
+
+- ci: use ANSIBLE_INJECT_FACT_VARS=false by default for testing (#232)
+- refactor: fix shellcheck for templates (#233)
+
 [1.3.7] - 2026-01-07
 --------------------
 
