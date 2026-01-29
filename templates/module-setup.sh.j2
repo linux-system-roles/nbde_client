@@ -1,6 +1,10 @@
 #!/bin/sh
+# This is a template, not an actual shell script, so tell shellcheck to
+# ignore the problematic templated parts
+# shellcheck disable=all
 {{ ansible_managed | comment }}
 {{ "system_role:nbde_client" | comment(prefix="", postfix="") }}
+# shellcheck enable=all
 
 depends() {
   echo network-manager
