@@ -1,7 +1,6 @@
 ---
 - name: Use nbde_client role - idempotency check
-  include_role:
-    name: linux-system-roles.nbde_client
+  include_tasks: tasks/run_role_with_clear_facts.yml
 
 - name: Verify idempotency of clevis operations
   assert:

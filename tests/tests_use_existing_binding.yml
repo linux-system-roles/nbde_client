@@ -8,8 +8,7 @@
           include_tasks: tasks/setup_test.yml
 
         - name: Add binding to slot 1
-          include_role:
-            name: linux-system-roles.nbde_client
+          include_tasks: tasks/run_role_with_clear_facts.yml
           vars:
             nbde_client_bindings:
               - device: "{{ nbde_client_test_device }}"
@@ -19,8 +18,7 @@
                   - http://localhost
 
         - name: Add binding to slot 2 without providing encryption_password
-          include_role:
-            name: linux-system-roles.nbde_client
+          include_tasks: tasks/run_role_with_clear_facts.yml
           vars:
             nbde_client_bindings:
               - device: "{{ nbde_client_test_device }}"
@@ -29,8 +27,7 @@
                   - http://localhost
 
         - name: Remove binding from slot 1
-          include_role:
-            name: linux-system-roles.nbde_client
+          include_tasks: tasks/run_role_with_clear_facts.yml
           vars:
             nbde_client_bindings:
               - device: "{{ nbde_client_test_device }}"
@@ -86,8 +83,7 @@
             state: absent
 
         - name: Add binding to slot 2 without providing encryption_password
-          include_role:
-            name: linux-system-roles.nbde_client
+          include_tasks: tasks/run_role_with_clear_facts.yml
           vars:
             nbde_client_bindings:
               - device: "{{ nbde_client_test_device }}"
@@ -96,8 +92,7 @@
                   - http://localhost
 
         - name: Remove binding from slot 1
-          include_role:
-            name: linux-system-roles.nbde_client
+          include_tasks: tasks/run_role_with_clear_facts.yml
           vars:
             nbde_client_bindings:
               - device: "{{ nbde_client_test_device }}"
