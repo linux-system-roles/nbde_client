@@ -15,8 +15,7 @@
     - name: Run the test
       block:
         - name: Use nbde_client role
-          include_role:
-            name: linux-system-roles.nbde_client
+          include_tasks: tasks/run_role_with_clear_facts.yml
 
         - name: Attempt to unlock device
           include_tasks: tasks/verify_unlock_device.yml

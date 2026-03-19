@@ -17,10 +17,9 @@
       register: nbde_client_device_checksum_before
 
     - name: Perform binding with nbde_client role
-      include_role:
-        name: linux-system-roles.nbde_client
-        public: true
+      include_tasks: tasks/run_role_with_clear_facts.yml
       vars:
+        __sr_public: true
         nbde_client_bindings:
           - device: "{{ nbde_client_selected_device }}"
             slot: "{{ nbde_client_test_slot }}"
