@@ -1,0 +1,1 @@
+plugins/modules/nbde_client_clevis.py validate-modules:missing-gplv3-license
