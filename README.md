@@ -25,6 +25,7 @@ These are the variables that can be passed to the role:
 | `nbde_client_provider` | `clevis`| identifies the provider for the `nbde_client` role. We currently support `clevis`.|
 | `nbde_client_bindings` | | a list containing binding configurations, which include e.g. devices and slots. |
 | `nbde_client_early_boot` | `true` | by default nbde_client will configure the initrd to unlock the volume. This may need to be disabled if the managed host is using static IP addressing, or if the volume should be unlocked by clevis-luks-askpass |
+| `nbde_client_secure_logging` | `true` | If true, suppress potentially sensitive output from tasks that handle credentials, secrets, and other sensitive data. Set to false for debugging issues with credential handling or secret management, but be aware this may expose sensitive information in logs. |
 
 ### nbde_client_bindings
 

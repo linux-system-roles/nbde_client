@@ -6,6 +6,7 @@
 
 - name: Get services
   service_facts:
+  no_log: "{{ ansible_verbosity < 2 }}"
 
 - name: Enable clevis askpass unit
   systemd:
@@ -29,7 +30,7 @@
     bindings: "{{ nbde_client_bindings | default([]) }}"
   check_mode: true
   register: __nbde_client_clevis_check_state
-  no_log: true
+  no_log: "{{ nbde_client_secure_logging }}"
 
 - name: Prepare key files, perform clevis operations and dispose of key files
   when:
@@ -55,7 +56,7 @@
       loop: "{{ nbde_client_bindings }}"
       loop_control:
         label: "{{ item.encryption_key_src | default('') }}"
-      no_log: true
+      no_log: "{{ nbde_client_secure_logging }}"
 
     - name: Perform clevis operations
       when:
@@ -65,7 +66,7 @@
         bindings: "{{ nbde_client_bindings | default([]) }}"
         data_dir: "{{ nbde_client_tempdir.path }}"
       notify: Handle nbde_client update initramfs
-      no_log: true
+      no_log: "{{ nbde_client_secure_logging }}"
 
   rescue:
     - name: Failed message
