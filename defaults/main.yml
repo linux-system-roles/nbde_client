@@ -21,5 +21,6 @@ nbde_client_early_boot: true
 #        - http://server1.example.com
 #        - http://server2.example.com
 nbde_client_bindings: []
+nbde_client_secure_logging: true
 
 # vim:set ts=2 sw=2 et:
