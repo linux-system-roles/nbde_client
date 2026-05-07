@@ -1,6 +1,17 @@
 Changelog
 =========
 
+[1.5.0] - 2026-05-07
+--------------------
+
+### New Features
+
+- feat: new variable `nbde_client_secure_logging` defaulting to `true` (#257)
+
+### Other Changes
+
+- ci: bump actions/github-script from 8 to 9 (#256)
+
 [1.4.0] - 2026-04-28
 --------------------
 
