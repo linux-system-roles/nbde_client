@@ -1,6 +1,15 @@
 Changelog
 =========
 
+[1.5.1] - 2026-06-24
+--------------------
+
+### Other Changes
+
+- ci: Add config file for CodeRabbit with custom rules (#259)
+- ci: Skip reviews for PRs with [citest_skip] in the title (#260)
+- test: remove unused files (#262)
+
 [1.5.0] - 2026-05-07
 --------------------
 
