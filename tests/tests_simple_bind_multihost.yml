@@ -1,0 +1,86 @@
+---
+- name: Setup nbde_server
+  hosts: nbde-server
+  tasks:
+    - name: Deploy NBDE server for testing
+      include_role:
+        name: fedora.linux_system_roles.nbde_server
+
+- name: Test simple bind
+  hosts: nbde-client
+  vars:
+    nbde_client_bindings:
+      - device: "{{ nbde_client_test_device }}"
+        encryption_password: "{{ nbde_client_test_encryption_password }}"
+        servers:
+          - http://nbde-server
+
+  tasks:
+    - name: Set up test environment
+      include_tasks: tasks/setup_test.yml
+
+    - name: Run the test
+      block:
+        - name: Use nbde_client role
+          include_tasks: tasks/run_role_with_clear_facts.yml
+          vars:
+            __sr_public: true
+
+        - name: Flush handlers
+          meta: flush_handlers
+
+        - name: Reboot the client
+          reboot:
+
+        - name: Verify that the test file is present with the unencrypted contents
+          copy:
+            content: "{{ nbde_client_test_file_contents }}"
+            dest: "{{ nbde_client_test_file }}"
+            mode: "0644"
+          register: __register_copy_test_file
+          failed_when: __register_copy_test_file is failed or __register_copy_test_file is changed
+      rescue:
+        - name: Check various states of the system
+          shell:
+            executable: /bin/bash
+            cmd: |
+              set -uxo pipefail
+              exec 1>&2
+              df -H
+              mount
+              cat /etc/fstab
+              cat /etc/crypttab
+              ls -alrtF /mnt/nbde_client_test
+              dmesg | grep -E -i 'luks|clevis'
+              journalctl -ex | grep -E -i 'luks|clevis'
+              journalctl -ex -u clevis-luks-askpass.service
+              lsblk
+              blkid
+              lsinitrd | grep -i clevis
+              clevis luks list -d {{ nbde_client_test_device }}
+              systemctl --version
+              firewall-cmd --list-all-zones
+              grep type=AVC /var/log/audit/audit.log
+              exit 0
+          changed_when: false
+
+        - name: Check the nbde_server machine
+          delegate_to: nbde-server
+          shell:
+            executable: /bin/bash
+            cmd: |
+              set -uxo pipefail
+              exec 1>&2
+              journalctl -ex
+              ss -nltp
+              firewall-cmd --list-all-zones
+              grep type=AVC /var/log/audit/audit.log
+          changed_when: false
+
+        - name: Fail
+          fail:
+
+      always:
+        - name: Clean up test environment
+          include_tasks: tasks/cleanup_test.yml
+# vim:set ts=2 sw=2 et:

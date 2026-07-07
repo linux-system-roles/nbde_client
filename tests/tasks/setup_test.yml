@@ -55,6 +55,7 @@
 - name: Deploy NBDE server for testing
   include_role:
     name: fedora.linux_system_roles.nbde_server
+  when: hostvars.keys() | list | length == 1
 
 - name: Create device for testing
   command: fallocate -l64m {{ nbde_client_test_device }}
@@ -88,4 +89,46 @@
   delegate_to: localhost
   changed_when: false
 
+- name: Setup for separate NBDE server host
+  when: hostvars.keys() | list | length > 1
+  block:
+    - name: Get unused disk for testing
+      fedora.linux_system_roles.find_unused_disk:
+        max_return: 1
+      register: __register_unused_disk
+
+    - name: Set nbde_client test variables - 1
+      set_fact:
+        nbde_client_test_device: "/dev/{{ __register_unused_disk.disks[0] }}"
+        nbde_client_test_mount_location: "/mnt/nbde_client_test"
+        nbde_client_test_encryption_password: nbde_client_test_passphrase
+        nbde_client_test_encryption_luks_version: luks2
+        nbde_client_test_file_contents: This is a test file for nbde_client tests
+
+    - name: Set nbde_client test variables - 2
+      set_fact:
+        nbde_client_test_file: "{{ nbde_client_test_mount_location }}/test.txt"
+
+    - name: Encrypt test disk
+      include_role:
+        name: fedora.linux_system_roles.storage
+      vars:
+        storage_volumes:
+          - name: nbde_client_volume
+            type: disk
+            disks: "{{ __register_unused_disk.disks }}"
+            mount_point: "{{ nbde_client_test_mount_location }}"
+            encryption: true
+            encryption_password: "{{ nbde_client_test_encryption_password }}"
+            encryption_luks_version: "{{ nbde_client_test_encryption_luks_version }}"
+
+    - name: Create test file
+      copy:
+        content: "{{ nbde_client_test_file_contents }}"
+        dest: "{{ nbde_client_test_file }}"
+        mode: "0644"
+
+    - name: Check that volume is setup for luks
+      command: cryptsetup luksDump {{ nbde_client_test_device }}
+      changed_when: false
 # vim:set ts=2 sw=2 et:
