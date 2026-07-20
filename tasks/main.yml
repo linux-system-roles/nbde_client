@@ -1,5 +1,16 @@
 # SPDX-License-Identifier: MIT
 ---
+- name: Fail when extra dracut settings are set but early boot is disabled
+  fail:
+    msg: >-
+      nbde_client_extra_dracut_settings requires nbde_client_early_boot
+      to be true. nbde_client_extra_dracut_settings has
+      {{ nbde_client_extra_dracut_settings | length }} entries, but
+      nbde_client_early_boot is false so they will not be written.
+  when:
+    - not nbde_client_early_boot
+    - nbde_client_extra_dracut_settings | length > 0
+
 # Set up internal variables.
 - name: Set version specific variables
   include_tasks: set_vars.yml

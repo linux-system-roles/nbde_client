@@ -14,5 +14,6 @@
             that:
               - nbde_client_provider is defined
               - nbde_client_bindings is defined
+              - nbde_client_extra_dracut_settings is defined
 
 # vim:set ts=2 sw=2 et:

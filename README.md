@@ -24,8 +24,9 @@ These are the variables that can be passed to the role:
 |----------|-------------|------|
 | `nbde_client_provider` | `clevis`| identifies the provider for the `nbde_client` role. We currently support `clevis`.|
 | `nbde_client_bindings` | | a list containing binding configurations, which include e.g. devices and slots. |
-| `nbde_client_early_boot` | `true` | by default nbde_client will configure the initrd to unlock the volume. This may need to be disabled if the managed host is using static IP addressing, or if the volume should be unlocked by clevis-luks-askpass |
+| `nbde_client_early_boot` | `true` | by default nbde_client will configure the initrd to unlock the volume. This may need to be disabled if the volume should be unlocked by clevis-luks-askpass. For managed hosts with static IP addressing, prefer `nbde_client_extra_dracut_settings` instead of disabling early boot. |
 | `nbde_client_secure_logging` | `true` | If true, suppress potentially sensitive output from tasks that handle credentials, secrets, and other sensitive data. Set to false for debugging issues with credential handling or secret management, but be aware this may expose sensitive information in logs. |
+| `nbde_client_extra_dracut_settings` | `[]` | a list of extra dracut configuration lines written to `/etc/dracut.conf.d/nbde_client.conf` in addition to the role's implicit platform settings. Use this for static IP early-boot networking and other custom dracut options. Requires `nbde_client_early_boot: true` (the default); the role fails if early boot is disabled. |
 
 ### nbde_client_bindings
 
@@ -56,6 +57,24 @@ nbde_client_bindings:
       - http://server1.example.com
       - http://server2.example.com
 ```
+
+### nbde_client_extra_dracut_settings
+
+`nbde_client_extra_dracut_settings` is a list of strings. Each string is written
+as a line in `/etc/dracut.conf.d/nbde_client.conf`, after the implicit
+platform-specific settings from `__nbde_client_dracut_settings`.
+
+This is useful for NBDE clients that use static IP addressing and need network
+configuration available during early boot. For example:
+
+```yaml
+nbde_client_extra_dracut_settings:
+  - kernel_cmdline+=" ip=192.0.2.10::192.0.2.1:255.255.255.0::ens3:none nameserver=192.0.2.100 "
+```
+
+**Note:** You cannot set `nbde_client_early_boot: false` when using
+`nbde_client_extra_dracut_settings`. Extra dracut settings are only written when
+early boot is enabled. The role fails if both are set this way.
 
 ## Example Playbooks
 
