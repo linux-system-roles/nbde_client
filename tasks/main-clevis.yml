@@ -22,6 +22,7 @@
     owner: root
     mode: '0444'
   when: nbde_client_early_boot | bool
+  notify: Handle nbde_client update initramfs
 
 - name: Check whether devices are at the desired state
   when:

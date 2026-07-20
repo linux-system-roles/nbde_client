@@ -23,4 +23,10 @@ nbde_client_early_boot: true
 nbde_client_bindings: []
 nbde_client_secure_logging: true
 
+# Extra lines written to /etc/dracut.conf.d/nbde_client.conf in addition to
+# the platform-specific __nbde_client_dracut_settings. Each list item is a
+# full dracut configuration line, for example:
+#   - kernel_cmdline+=" ip=192.0.2.10::192.0.2.1:255.255.255.0::ens3:none nameserver=192.0.2.100 "
+nbde_client_extra_dracut_settings: []
+
 # vim:set ts=2 sw=2 et:
