@@ -1,6 +1,24 @@
 Changelog
 =========
 
+[1.6.0] - 2026-07-27
+--------------------
+
+### New Features
+
+- feat: Support extra dracut settings for static IP (#268)
+
+### Bug Fixes
+
+- fix: use hostonly_cmdline=yes on newer versions of OS (#267)
+
+### Other Changes
+
+- ci: use gha checkout v7, codecov v7 [citest_skip] (#264)
+- ci: Use our own pr_title_lint.py instead of NPM commitlint [citest_skip] (#265)
+- ci: bump tox-lsr version to 3.20.0 to fix tox 4.58 api breakage [citest_skip] (#269)
+- ci: Add support for Fedora 44 and drop Fedora 42 - use ansible-core 2.21 [citest_skip] (#271)
+
 [1.5.1] - 2026-06-24
 --------------------
 

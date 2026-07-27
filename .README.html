@@ -143,6 +143,8 @@ id="toc-supported-distributions">Supported Distributions</a></li>
 <ul>
 <li><a href="#nbde_client_bindings"
 id="toc-nbde_client_bindings">nbde_client_bindings</a></li>
+<li><a href="#nbde_client_extra_dracut_settings"
+id="toc-nbde_client_extra_dracut_settings">nbde_client_extra_dracut_settings</a></li>
 </ul></li>
 <li><a href="#example-playbooks" id="toc-example-playbooks">Example
 Playbooks</a>
@@ -197,9 +199,10 @@ and slots.</td>
 <td><code>nbde_client_early_boot</code></td>
 <td><code>true</code></td>
 <td>by default nbde_client will configure the initrd to unlock the
-volume. This may need to be disabled if the managed host is using static
-IP addressing, or if the volume should be unlocked by
-clevis-luks-askpass</td>
+volume. This may need to be disabled if the volume should be unlocked by
+clevis-luks-askpass. For managed hosts with static IP addressing, prefer
+<code>nbde_client_extra_dracut_settings</code> instead of disabling
+early boot.</td>
 </tr>
 <tr>
 <td><code>nbde_client_secure_logging</code></td>
@@ -208,6 +211,16 @@ clevis-luks-askpass</td>
 handle credentials, secrets, and other sensitive data. Set to false for
 debugging issues with credential handling or secret management, but be
 aware this may expose sensitive information in logs.</td>
+</tr>
+<tr>
+<td><code>nbde_client_extra_dracut_settings</code></td>
+<td><code>[]</code></td>
+<td>a list of extra dracut configuration lines written to
+<code>/etc/dracut.conf.d/nbde_client.conf</code> in addition to the
+role's implicit platform settings. Use this for static IP early-boot
+networking and other custom dracut options. Requires
+<code>nbde_client_early_boot: true</code> (the default); the role fails
+if early boot is disabled.</td>
 </tr>
 </tbody>
 </table>
@@ -298,24 +311,25 @@ class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">servers</span><span class="kw">:</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> http://server1.example.com</span></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> http://server2.example.com</span></span></code></pre></div>
+<h2
+id="nbde_client_extra_dracut_settings">nbde_client_extra_dracut_settings</h2>
+<p><code>nbde_client_extra_dracut_settings</code> is a list of strings.
+Each string is written as a line in
+<code>/etc/dracut.conf.d/nbde_client.conf</code>, after the implicit
+platform-specific settings from
+<code>__nbde_client_dracut_settings</code>.</p>
+<p>This is useful for NBDE clients that use static IP addressing and
+need network configuration available during early boot. For example:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nbde_client_extra_dracut_settings</span><span class="kw">:</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> kernel_cmdline+=&quot; ip=192.0.2.10::192.0.2.1:255.255.255.0::ens3:none nameserver=192.0.2.100 &quot;</span></span></code></pre></div>
+<p><strong>Note:</strong> You cannot set
+<code>nbde_client_early_boot: false</code> when using
+<code>nbde_client_extra_dracut_settings</code>. Extra dracut settings
+are only written when early boot is enabled. The role fails if both are
+set this way.</p>
 <h1 id="example-playbooks">Example Playbooks</h1>
 <h2 id="example-1-high-availability">Example 1: high availability</h2>
-<div class="sourceCode" id="cb2"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="pp">---</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">hosts</span><span class="kw">:</span><span class="at"> all</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">vars</span><span class="kw">:</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">nbde_client_bindings</span><span class="kw">:</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">device</span><span class="kw">:</span><span class="at"> /dev/sda1</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">        # recommend vault encrypting the encryption_password</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co">        # see https://docs.ansible.com/ansible/latest/user_guide/vault.html</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">encryption_password</span><span class="kw">:</span><span class="at"> password</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">servers</span><span class="kw">:</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> http://server1.example.com</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> http://server2.example.com</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">roles</span><span class="kw">:</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> linux-system-roles.nbde_client</span></span></code></pre></div>
-<h2 id="example-2-remove-binding-from-slot-2-in-devsda1">Example 2:
-remove binding from slot 2 in /dev/sda1</h2>
 <div class="sourceCode" id="cb3"><pre
 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="pp">---</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">hosts</span><span class="kw">:</span><span class="at"> all</span></span>
@@ -325,10 +339,26 @@ class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co">        # recommend vault encrypting the encryption_password</span></span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co">        # see https://docs.ansible.com/ansible/latest/user_guide/vault.html</span></span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">encryption_password</span><span class="kw">:</span><span class="at"> password</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">slot</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">state</span><span class="kw">:</span><span class="at"> absent</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">roles</span><span class="kw">:</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> linux-system-roles.nbde_client</span></span></code></pre></div>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">servers</span><span class="kw">:</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> http://server1.example.com</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> http://server2.example.com</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">roles</span><span class="kw">:</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> linux-system-roles.nbde_client</span></span></code></pre></div>
+<h2 id="example-2-remove-binding-from-slot-2-in-devsda1">Example 2:
+remove binding from slot 2 in /dev/sda1</h2>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="pp">---</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">hosts</span><span class="kw">:</span><span class="at"> all</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">vars</span><span class="kw">:</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">nbde_client_bindings</span><span class="kw">:</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">device</span><span class="kw">:</span><span class="at"> /dev/sda1</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">        # recommend vault encrypting the encryption_password</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">        # see https://docs.ansible.com/ansible/latest/user_guide/vault.html</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">encryption_password</span><span class="kw">:</span><span class="at"> password</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">slot</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">state</span><span class="kw">:</span><span class="at"> absent</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">roles</span><span class="kw">:</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> linux-system-roles.nbde_client</span></span></code></pre></div>
 <h1 id="license">License</h1>
 <p>MIT</p>
 </article>
