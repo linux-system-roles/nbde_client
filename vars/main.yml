@@ -18,6 +18,8 @@ __nbde_client_required_facts:
 __nbde_client_required_facts_subsets: "{{ ['!all', '!min'] +
   __nbde_client_required_facts }}"
 
+__nbde_client_write_log_file: false
+
 # vim:set ts=2 sw=2 et:
 
 # BEGIN - DO NOT EDIT THIS BLOCK - rh distros variables
