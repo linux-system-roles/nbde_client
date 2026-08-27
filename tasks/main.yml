@@ -11,6 +11,10 @@
     - not nbde_client_early_boot
     - nbde_client_extra_dracut_settings | length > 0
 
+- name: Validate role parameters
+  ansible.builtin.include_tasks: assert_role_vars.yml
+  when: nbde_client_bindings | length > 0
+
 # Set up internal variables.
 - name: Set version specific variables
   include_tasks: set_vars.yml
