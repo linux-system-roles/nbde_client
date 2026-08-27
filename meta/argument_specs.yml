@@ -1,0 +1,91 @@
+# SPDX-License-Identifier: MIT
+---
+argument_specs:
+  main:
+    short_description: The nbde_client role.
+    description: >
+      The nbde_client role allows you to configure Network-Bound Disk
+      Encryption (NBDE) clients. It manages LUKS device bindings to tang
+      servers and optionally configures early boot (dracut) to unlock
+      encrypted volumes during the initramfs stage.
+    options:
+      nbde_client_provider:
+        type: str
+        choices:
+          - clevis
+        description: >
+          The provider for the nbde_client role. Currently only `clevis`
+          is supported. Defaults to `clevis`.
+      nbde_client_early_boot:
+        type: bool
+        description: >
+          Whether to configure the initrd to unlock the volume during
+          early boot. When `false`, the volume is unlocked by
+          clevis-luks-askpass instead. Defaults to `true`.
+      nbde_client_bindings:
+        type: list
+        elements: dict
+        description: >
+          A list of binding configurations specifying devices, servers,
+          and related parameters for NBDE setup. Defaults to `[]`.
+        options:
+          device:
+            type: path
+            required: true
+            description: >
+              The path of the backing device of an encrypted LUKS device
+              on the managed host. The device must already be configured
+              as a LUKS device.
+          encryption_password:
+            type: str
+            description: >
+              A valid password or passphrase for opening the specified
+              device. It is recommended to vault-encrypt the value.
+          encryption_key_src:
+            type: path
+            description: >
+              The path on the control node of a file containing an
+              encryption key valid for opening the specified device.
+          state:
+            type: str
+            choices:
+              - present
+              - absent
+            description: >
+              Whether a binding should be added (`present`) or removed
+              (`absent`). Defaults to `present`.
+          slot:
+            type: int
+            description: >
+              The LUKS slot to use for the binding. Defaults to `1`.
+          servers:
+            type: list
+            elements: str
+            description: >
+              A list of tang server URLs to bind to. Specifying more
+              than one server enables high availability.
+          threshold:
+            type: int
+            description: >
+              The threshold for the Shamir Secret Sharing scheme when
+              using multiple servers. Indicates how many servers must
+              succeed for decryption. Defaults to `1`.
+          password_temporary:
+            type: bool
+            description: >
+              If `true`, the encryption password or key will be removed
+              from the LUKS device after the binding operation completes.
+              Defaults to `false`.
+      nbde_client_secure_logging:
+        type: bool
+        description: >
+          If `true`, suppresses potentially sensitive output from tasks
+          that handle credentials and secrets. Defaults to `true`.
+      nbde_client_extra_dracut_settings:
+        type: list
+        elements: str
+        description: >
+          A list of extra dracut configuration lines written to
+          `/etc/dracut.conf.d/nbde_client.conf`. Useful for static IP
+          early-boot networking. Requires `nbde_client_early_boot` to be
+          `true`. Defaults to `[]`.

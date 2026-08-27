@@ -1,0 +1,270 @@
+# SPDX-License-Identifier: MIT
+---
+- name: Verify invalid parameters are rejected
+  hosts: all
+  tasks:
+    - name: Run invalid input tests
+      block:
+        # ====================================================
+        # Section 1: Verify role works with valid defaults
+        # ====================================================
+        - name: Run role with valid defaults
+          ansible.builtin.include_role:
+            name: linux-system-roles.nbde_client
+
+        # ====================================================
+        # Section 2: argument_specs validation (Ansible 2.10+)
+        # ====================================================
+        - name: Run argument specs validation tests
+          when: ansible_version.full is version("2.10", ">=")
+          block:
+            # --- Test: invalid provider choice ---
+            - name: Argument specs reject invalid nbde_client_provider
+              block:
+                - name: Run role with invalid provider
+                  ansible.builtin.include_role:
+                    name: linux-system-roles.nbde_client
+                  vars:
+                    nbde_client_provider: invalid_provider
+              rescue:
+                - name: Mark invalid provider rejected
+                  ansible.builtin.set_fact:
+                    __invalid_input_provider_choice_failed: true
+
+            - name: Assert invalid provider was rejected
+              ansible.builtin.assert:
+                that:
+                  - __invalid_input_provider_choice_failed | default(false)
+                fail_msg: >-
+                  argument_specs should reject nbde_client_provider value
+                  'invalid_provider'
+
+            # --- Test: invalid type for early_boot ---
+            - name: Argument specs reject non-bool nbde_client_early_boot
+              block:
+                - name: Run role with non-bool early_boot
+                  ansible.builtin.include_role:
+                    name: linux-system-roles.nbde_client
+                  vars:
+                    nbde_client_early_boot: not_a_bool
+              rescue:
+                - name: Mark invalid early_boot type rejected
+                  ansible.builtin.set_fact:
+                    __invalid_input_early_boot_type_failed: true
+
+            - name: Assert invalid early_boot type was rejected
+              ansible.builtin.assert:
+                that:
+                  - __invalid_input_early_boot_type_failed | default(false)
+                fail_msg: >-
+                  argument_specs should reject nbde_client_early_boot with
+                  type string
+
+            # --- Test: invalid type for bindings ---
+            - name: Argument specs reject non-list nbde_client_bindings
+              block:
+                - name: Run role with non-list bindings
+                  ansible.builtin.include_role:
+                    name: linux-system-roles.nbde_client
+                  vars:
+                    nbde_client_bindings: not_a_list
+              rescue:
+                - name: Mark invalid bindings type rejected
+                  ansible.builtin.set_fact:
+                    __invalid_input_bindings_type_failed: true
+
+            - name: Assert invalid bindings type was rejected
+              ansible.builtin.assert:
+                that:
+                  - __invalid_input_bindings_type_failed | default(false)
+                fail_msg: >-
+                  argument_specs should reject nbde_client_bindings with
+                  type string
+
+            # --- Test: missing required device in bindings ---
+            - name: Argument specs reject missing device in bindings
+              block:
+                - name: Run role without required device
+                  ansible.builtin.include_role:
+                    name: linux-system-roles.nbde_client
+                  vars:
+                    nbde_client_bindings:
+                      - state: present
+              rescue:
+                - name: Mark missing device rejected
+                  ansible.builtin.set_fact:
+                    __invalid_input_missing_device_failed: true
+                  when: >-
+                    'missing required arguments' in
+                    (ansible_failed_result | default({}) | to_json)
+
+            - name: Assert missing device was rejected
+              ansible.builtin.assert:
+                that:
+                  - __invalid_input_missing_device_failed | default(false)
+                fail_msg: >-
+                  argument_specs should reject nbde_client_bindings entries
+                  missing the required device field
+
+            # --- Test: invalid choice for state in bindings ---
+            - name: Argument specs reject invalid state in bindings
+              block:
+                - name: Run role with invalid state
+                  ansible.builtin.include_role:
+                    name: linux-system-roles.nbde_client
+                  vars:
+                    nbde_client_bindings:
+                      - device: /dev/sda1
+                        state: invalid_state
+              rescue:
+                - name: Mark invalid state choice rejected
+                  ansible.builtin.set_fact:
+                    __invalid_input_state_choice_failed: true
+
+            - name: Assert invalid state choice was rejected
+              ansible.builtin.assert:
+                that:
+                  - __invalid_input_state_choice_failed | default(false)
+                fail_msg: >-
+                  argument_specs should reject state value
+                  'invalid_state'
+
+            # --- Test: invalid type for slot in bindings ---
+            - name: Argument specs reject non-int slot in bindings
+              block:
+                - name: Run role with non-int slot
+                  ansible.builtin.include_role:
+                    name: linux-system-roles.nbde_client
+                  vars:
+                    nbde_client_bindings:
+                      - device: /dev/sda1
+                        slot: not_an_int
+              rescue:
+                - name: Mark invalid slot type rejected
+                  ansible.builtin.set_fact:
+                    __invalid_input_slot_type_failed: true
+
+            - name: Assert invalid slot type was rejected
+              ansible.builtin.assert:
+                that:
+                  - __invalid_input_slot_type_failed | default(false)
+                fail_msg: >-
+                  argument_specs should reject slot with type string
+
+            # --- Test: invalid type for password_temporary in bindings ---
+            - name: Argument specs reject non-bool password_temporary
+              block:
+                - name: Run role with non-bool password_temporary
+                  ansible.builtin.include_role:
+                    name: linux-system-roles.nbde_client
+                  vars:
+                    nbde_client_bindings:
+                      - device: /dev/sda1
+                        password_temporary: not_a_bool
+              rescue:
+                - name: Mark invalid password_temporary type rejected
+                  ansible.builtin.set_fact:
+                    __invalid_input_password_temporary_type_failed: true
+
+            - name: Assert invalid password_temporary type was rejected
+              ansible.builtin.assert:
+                that:
+                  - >-
+                    __invalid_input_password_temporary_type_failed
+                    | default(false)
+                fail_msg: >-
+                  argument_specs should reject password_temporary with
+                  type string
+
+            # --- Test: invalid type for secure_logging ---
+            - name: Argument specs reject non-bool nbde_client_secure_logging
+              block:
+                - name: Run role with non-bool secure_logging
+                  ansible.builtin.include_role:
+                    name: linux-system-roles.nbde_client
+                  vars:
+                    nbde_client_secure_logging: not_a_bool
+              rescue:
+                - name: Mark invalid secure_logging type rejected
+                  ansible.builtin.set_fact:
+                    __invalid_input_secure_logging_type_failed: true
+
+            - name: Assert invalid secure_logging type was rejected
+              ansible.builtin.assert:
+                that:
+                  - >-
+                    __invalid_input_secure_logging_type_failed
+                    | default(false)
+                fail_msg: >-
+                  argument_specs should reject nbde_client_secure_logging
+                  with type string
+
+            # --- Test: invalid type for extra_dracut_settings ---
+            - name: Argument specs reject non-list extra_dracut_settings
+              block:
+                - name: Run role with non-list extra_dracut_settings
+                  ansible.builtin.include_role:
+                    name: linux-system-roles.nbde_client
+                  vars:
+                    nbde_client_extra_dracut_settings: not_a_list
+              rescue:
+                - name: Mark invalid extra_dracut_settings type rejected
+                  ansible.builtin.set_fact:
+                    __invalid_input_extra_dracut_type_failed: true
+
+            - name: Assert invalid extra_dracut_settings type was rejected
+              ansible.builtin.assert:
+                that:
+                  - >-
+                    __invalid_input_extra_dracut_type_failed
+                    | default(false)
+                fail_msg: >-
+                  argument_specs should reject
+                  nbde_client_extra_dracut_settings with type string
+
+        # ====================================================
+        # Section 3: Cross-field validation (all versions)
+        # ====================================================
+
+        # --- Test: extra_dracut_settings with early_boot disabled ---
+        - name: Role rejects extra_dracut_settings when early_boot is false
+          block:
+            - name: Run role with extra_dracut_settings and early_boot false
+              ansible.builtin.include_role:
+                name: linux-system-roles.nbde_client
+              vars:
+                nbde_client_early_boot: false
+                nbde_client_extra_dracut_settings:
+                  - kernel_cmdline+=" ip=dhcp "
+          rescue:
+            - name: Mark extra_dracut with early_boot false rejected
+              ansible.builtin.set_fact:
+                __invalid_input_extra_dracut_early_boot_failed: true
+              when: >-
+                'nbde_client_extra_dracut_settings requires' in
+                (ansible_failed_result | default({}) | to_json)
+
+        - name: Assert extra_dracut with early_boot false was rejected
+          ansible.builtin.assert:
+            that:
+              - >-
+                __invalid_input_extra_dracut_early_boot_failed
+                | default(false)
+            fail_msg: >-
+              Role should reject nbde_client_extra_dracut_settings when
+              nbde_client_early_boot is false
+
+      always:
+        - name: Clear test facts
+          ansible.builtin.set_fact:
+            __invalid_input_provider_choice_failed:
+            __invalid_input_early_boot_type_failed:
+            __invalid_input_bindings_type_failed:
+            __invalid_input_missing_device_failed:
+            __invalid_input_state_choice_failed:
+            __invalid_input_slot_type_failed:
+            __invalid_input_password_temporary_type_failed:
+            __invalid_input_secure_logging_type_failed:
+            __invalid_input_extra_dracut_type_failed:
+            __invalid_input_extra_dracut_early_boot_failed:
+          tags: tests::cleanup

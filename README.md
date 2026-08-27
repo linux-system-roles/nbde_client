@@ -18,7 +18,10 @@ This role can currently create `tang` bindings. TPM2 is not supported as of now.
 
 ## Role Variables
 
-These are the variables that can be passed to the role:
+These are the variables that can be passed to the role.
+
+Type, required-field, and choice validation is enforced by
+`meta/argument_specs.yml`. Role tasks enforce cross-field validation.
 
 | **Variable** | **Default/Choices** | **Description** |
 |----------|-------------|------|
