@@ -223,8 +223,92 @@
                   nbde_client_extra_dracut_settings with type string
 
         # ====================================================
-        # Section 3: Cross-field validation (all versions)
+        # Section 3: assert_role_vars validation (all versions)
         # ====================================================
+
+        # --- Test: slot with invalid range ---
+        - name: Assert rejects slot less than 1
+          block:
+            - name: Run role with slot 0
+              ansible.builtin.include_role:
+                name: linux-system-roles.nbde_client
+              vars:
+                nbde_client_bindings:
+                  - device: /dev/sda1
+                    slot: 0
+                    servers:
+                      - http://server1.example.com
+          rescue:
+            - name: Mark invalid slot range rejected
+              ansible.builtin.set_fact:
+                __invalid_input_slot_range_failed: true
+              when: >-
+                'must be a positive integer' in
+                (ansible_failed_result | default({}) | to_json)
+
+        - name: Assert invalid slot range was rejected
+          ansible.builtin.assert:
+            that:
+              - __invalid_input_slot_range_failed | default(false)
+            fail_msg: >-
+              assert_role_vars should reject slot values less than 1
+
+        # --- Test: threshold with invalid range ---
+        - name: Assert rejects threshold less than 1
+          block:
+            - name: Run role with threshold 0
+              ansible.builtin.include_role:
+                name: linux-system-roles.nbde_client
+              vars:
+                nbde_client_bindings:
+                  - device: /dev/sda1
+                    threshold: 0
+                    servers:
+                      - http://server1.example.com
+          rescue:
+            - name: Mark invalid threshold range rejected
+              ansible.builtin.set_fact:
+                __invalid_input_threshold_range_failed: true
+              when: >-
+                'must be a positive integer' in
+                (ansible_failed_result | default({}) | to_json)
+
+        - name: Assert invalid threshold range was rejected
+          ansible.builtin.assert:
+            that:
+              - >-
+                __invalid_input_threshold_range_failed
+                | default(false)
+            fail_msg: >-
+              assert_role_vars should reject threshold values less than 1
+
+        # --- Test: missing servers when state is present ---
+        - name: Assert rejects missing servers when state is present
+          block:
+            - name: Run role with state present and no servers
+              ansible.builtin.include_role:
+                name: linux-system-roles.nbde_client
+              vars:
+                nbde_client_bindings:
+                  - device: /dev/sda1
+                    state: present
+          rescue:
+            - name: Mark missing servers rejected
+              ansible.builtin.set_fact:
+                __invalid_input_missing_servers_failed: true
+              when: >-
+                'servers is required' in
+                (ansible_failed_result | default({}) | to_json)
+
+        - name: Assert missing servers was rejected
+          ansible.builtin.assert:
+            that:
+              - >-
+                __invalid_input_missing_servers_failed
+                | default(false)
+            fail_msg: >-
+              assert_role_vars should reject bindings with state present
+              and no servers
 
         # --- Test: extra_dracut_settings with early_boot disabled ---
         - name: Role rejects extra_dracut_settings when early_boot is false
@@ -266,5 +350,8 @@
             __invalid_input_password_temporary_type_failed:
             __invalid_input_secure_logging_type_failed:
             __invalid_input_extra_dracut_type_failed:
+            __invalid_input_slot_range_failed:
+            __invalid_input_threshold_range_failed:
+            __invalid_input_missing_servers_failed:
             __invalid_input_extra_dracut_early_boot_failed:
           tags: tests::cleanup
