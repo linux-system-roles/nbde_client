@@ -3,10 +3,12 @@
 - name: Assert slot is a positive integer
   ansible.builtin.assert:
     that:
+      - item.slot is not sameas true
+      - item.slot is not sameas false
       - item.slot | int >= 1
     fail_msg: >-
       nbde_client_bindings[{{ idx }}].slot must be a positive integer,
-      got {{ item.slot }}
+      got {{ item.slot }} ({{ item.slot | type_debug }})
   loop: "{{ nbde_client_bindings }}"
   loop_control:
     index_var: idx
@@ -16,10 +18,12 @@
 - name: Assert threshold is a positive integer
   ansible.builtin.assert:
     that:
+      - item.threshold is not sameas true
+      - item.threshold is not sameas false
       - item.threshold | int >= 1
     fail_msg: >-
       nbde_client_bindings[{{ idx }}].threshold must be a positive
-      integer, got {{ item.threshold }}
+      integer, got {{ item.threshold }} ({{ item.threshold | type_debug }})
   loop: "{{ nbde_client_bindings }}"
   loop_control:
     index_var: idx
