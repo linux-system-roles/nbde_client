@@ -11,23 +11,26 @@ argument_specs:
     options:
       nbde_client_provider:
         type: str
+        default: clevis
         choices:
           - clevis
         description: >
           The provider for the nbde_client role. Currently only `clevis`
-          is supported. Defaults to `clevis`.
+          is supported.
       nbde_client_early_boot:
         type: bool
+        default: true
         description: >
           Whether to configure the initrd to unlock the volume during
           early boot. When `false`, the volume is unlocked by
-          clevis-luks-askpass instead. Defaults to `true`.
+          clevis-luks-askpass instead.
       nbde_client_bindings:
         type: list
         elements: dict
+        default: []
         description: >
           A list of binding configurations specifying devices, servers,
-          and related parameters for NBDE setup. Defaults to `[]`.
+          and related parameters for NBDE setup.
         options:
           device:
             type: path
@@ -48,16 +51,18 @@ argument_specs:
               encryption key valid for opening the specified device.
           state:
             type: str
+            default: present
             choices:
               - present
               - absent
             description: >
               Whether a binding should be added (`present`) or removed
-              (`absent`). Defaults to `present`.
+              (`absent`).
           slot:
             type: int
+            default: 1
             description: >
-              The LUKS slot to use for the binding. Defaults to `1`.
+              The LUKS slot to use for the binding.
           servers:
             type: list
             elements: str
@@ -66,26 +71,29 @@ argument_specs:
               than one server enables high availability.
           threshold:
             type: int
+            default: 1
             description: >
               The threshold for the Shamir Secret Sharing scheme when
               using multiple servers. Indicates how many servers must
-              succeed for decryption. Defaults to `1`.
+              succeed for decryption.
           password_temporary:
             type: bool
+            default: false
             description: >
               If `true`, the encryption password or key will be removed
               from the LUKS device after the binding operation completes.
-              Defaults to `false`.
       nbde_client_secure_logging:
         type: bool
+        default: true
         description: >
           If `true`, suppresses potentially sensitive output from tasks
-          that handle credentials and secrets. Defaults to `true`.
+          that handle credentials and secrets.
       nbde_client_extra_dracut_settings:
         type: list
         elements: str
+        default: []
         description: >
           A list of extra dracut configuration lines written to
           `/etc/dracut.conf.d/nbde_client.conf`. Useful for static IP
           early-boot networking. Requires `nbde_client_early_boot` to be
-          `true`. Defaults to `[]`.
+          `true`.
