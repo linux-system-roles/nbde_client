@@ -1,6 +1,29 @@
 Changelog
 =========
 
+[1.8.0] - 2026-09-17
+--------------------
+
+### New Features
+
+- feat: Argument spec implementation (#283)
+
+### Other Changes
+
+- ci: use commit hash for github action, add persist-credentials false [citest_skip] (#279)
+- ci: refactor build_docs so that pandoc runs in isolated read-only job [citest_skip] (#280)
+- ci: use exact match for systemroller instead of contains [citest_skip] (#281)
+- ci(build_docs): fix pandoc container syntax [citest_skip] (#282)
+- ci: [citest_skip] bump github/codeql-action/init from 4.37.4 to 4.37.9 (#284)
+- ci: [citest_skip] bump github/codeql-action/autobuild from 4.37.4 to 4.37.9 (#285)
+- ci: [citest_skip] bump github/codeql-action/analyze from 4.37.4 to 4.37.9 (#286)
+- ci: [citest_skip] bump codespell-project/actions-codespell from 2.1 to 2.2 (#287)
+- ci: [citest_skip] bump actions/download-artifact from 7.0.0 to 8.0.1 (#288)
+- refactor: Relax collection constraints, gate vendored modules by python version, update ci versions [citest_skip] (#289)
+- ci: do not run ci tests by default, require citest comment or label [citest_skip] (#290)
+- ci: replace weekly_ci with periodic_ci, stagger schedules [citest_skip] (#291)
+- ci: update status when action triggered by issue comment (#292)
+
 [1.7.0] - 2026-08-06
 --------------------
 

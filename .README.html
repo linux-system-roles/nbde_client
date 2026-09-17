@@ -173,7 +173,10 @@ uses it for operations like encryption and decryption.</p>
 <p>This role can currently create <code>tang</code> bindings. TPM2 is
 not supported as of now.</p>
 <h1 id="role-variables">Role Variables</h1>
-<p>These are the variables that can be passed to the role:</p>
+<p>These are the variables that can be passed to the role.</p>
+<p>Type, required-field, and choice validation is enforced by
+<code>meta/argument_specs.yml</code> and
+<code>tasks/assert_role_vars.yml</code>.</p>
 <table>
 <thead>
 <tr>
