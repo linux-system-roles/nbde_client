@@ -112,6 +112,8 @@ msg:
 import os.path
 import json
 import re
+import shutil
+import tempfile
 
 try:
     from shlex import quote as cmd_quote
@@ -762,7 +764,7 @@ def restore_luks1_device(module, device, gap_backup):
     return result
 
 
-def backup_luks_device(module, device):
+def backup_luks_device(module, device, backup_dir):
     """Backup LUKS device header, as we may need to restore it upon
        a failed binding procedure.
     Return: <backup> <error>"""
@@ -782,7 +784,7 @@ def backup_luks_device(module, device):
         return luks1_backup, None
 
     # For LUKS2, cryptsetup luksHeaderBackup/luksHeaderRestore is enough.
-    header_backup = os.path.join(module.params["data_dir"], "header")
+    header_backup = os.path.join(backup_dir, "header")
     args = [
         "cryptsetup",
         "luksHeaderBackup",
@@ -1315,11 +1317,24 @@ def bind_slot(module, **kwargs):
     if err:
         return False, err
 
-    # At this point, we backup the device for later restoration, if binding
-    # fails.
-    backup, err = backup_luks_device(module, kwargs["device"])
-    if err:
-        return False, err
+    # A directory of its own, as a device may be bound more than once per run.
+    backup_dir = tempfile.mkdtemp(prefix="header-", dir=module.params["data_dir"])
+    try:
+        # At this point, we backup the device for later restoration, if binding
+        # fails.
+        backup, err = backup_luks_device(module, kwargs["device"], backup_dir)
+        if err:
+            return False, err
+
+        return bind_backed_up_slot(module, backup, **kwargs)
+    finally:
+        shutil.rmtree(backup_dir, ignore_errors=True)
+
+
+def bind_backed_up_slot(module, backup, **kwargs):
+    """Create a clevis binding in a LUKS device that has already been
+    backed up, restoring the backup if the binding fails.
+    Return <result> <error>"""
 
     passphrase, is_keyfile, err = get_valid_passphrase(module, **kwargs)
     if err:
