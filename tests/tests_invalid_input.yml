@@ -2,6 +2,13 @@
 ---
 - name: Verify invalid parameters are rejected
   hosts: all
+  vars:
+    __invalid_input_failure_messages: >-
+      {{ ([ansible_failed_result.msg | default('') | string,
+           ansible_failed_result.msg.msg | default('') | string]
+          + (ansible_failed_result.results | default([])
+             | map(attribute='msg') | map('default', '') | list))
+         | join(' ') }}
   tasks:
     - name: Run invalid input tests
       block:
@@ -30,6 +37,10 @@
                 - name: Mark invalid provider rejected
                   ansible.builtin.set_fact:
                     __invalid_input_provider_choice_failed: true
+                  when:
+                    - >-
+                      'value of nbde_client_provider must be one of: clevis, got: invalid_provider' in
+                      __invalid_input_failure_messages
 
             - name: Assert invalid provider was rejected
               ansible.builtin.assert:
@@ -51,6 +62,13 @@
                 - name: Mark invalid early_boot type rejected
                   ansible.builtin.set_fact:
                     __invalid_input_early_boot_type_failed: true
+                  when:
+                    - >-
+                      "argument 'nbde_client_early_boot' is of type" in
+                      __invalid_input_failure_messages
+                    - >-
+                      'unable to convert to bool' in
+                      __invalid_input_failure_messages
 
             - name: Assert invalid early_boot type was rejected
               ansible.builtin.assert:
@@ -72,6 +90,13 @@
                 - name: Mark invalid bindings type rejected
                   ansible.builtin.set_fact:
                     __invalid_input_bindings_type_failed: true
+                  when:
+                    - >-
+                      "Elements value for option 'nbde_client_bindings'" in
+                      __invalid_input_failure_messages
+                    - >-
+                      'unable to convert to dict' in
+                      __invalid_input_failure_messages
 
             - name: Assert invalid bindings type was rejected
               ansible.builtin.assert:
@@ -94,9 +119,10 @@
                 - name: Mark missing device rejected
                   ansible.builtin.set_fact:
                     __invalid_input_missing_device_failed: true
-                  when: >-
-                    'missing required arguments' in
-                    (ansible_failed_result | default({}) | to_json)
+                  when:
+                    - >-
+                      'missing required arguments: device found in nbde_client_bindings' in
+                      __invalid_input_failure_messages
 
             - name: Assert missing device was rejected
               ansible.builtin.assert:
@@ -120,6 +146,13 @@
                 - name: Mark invalid state choice rejected
                   ansible.builtin.set_fact:
                     __invalid_input_state_choice_failed: true
+                  when:
+                    - >-
+                      'value of state must be one of: present, absent' in
+                      __invalid_input_failure_messages
+                    - >-
+                      'got: invalid_state found in nbde_client_bindings' in
+                      __invalid_input_failure_messages
 
             - name: Assert invalid state choice was rejected
               ansible.builtin.assert:
@@ -143,6 +176,16 @@
                 - name: Mark invalid slot type rejected
                   ansible.builtin.set_fact:
                     __invalid_input_slot_type_failed: true
+                  when:
+                    - >-
+                      "argument 'slot' is of type" in
+                      __invalid_input_failure_messages
+                    - >-
+                      "found in 'nbde_client_bindings'" in
+                      __invalid_input_failure_messages
+                    - >-
+                      'unable to convert to int' in
+                      __invalid_input_failure_messages
 
             - name: Assert invalid slot type was rejected
               ansible.builtin.assert:
@@ -165,6 +208,16 @@
                 - name: Mark invalid password_temporary type rejected
                   ansible.builtin.set_fact:
                     __invalid_input_password_temporary_type_failed: true
+                  when:
+                    - >-
+                      "argument 'password_temporary' is of type" in
+                      __invalid_input_failure_messages
+                    - >-
+                      "found in 'nbde_client_bindings'" in
+                      __invalid_input_failure_messages
+                    - >-
+                      'unable to convert to bool' in
+                      __invalid_input_failure_messages
 
             - name: Assert invalid password_temporary type was rejected
               ansible.builtin.assert:
@@ -188,6 +241,13 @@
                 - name: Mark invalid secure_logging type rejected
                   ansible.builtin.set_fact:
                     __invalid_input_secure_logging_type_failed: true
+                  when:
+                    - >-
+                      "argument 'nbde_client_secure_logging' is of type" in
+                      __invalid_input_failure_messages
+                    - >-
+                      'unable to convert to bool' in
+                      __invalid_input_failure_messages
 
             - name: Assert invalid secure_logging type was rejected
               ansible.builtin.assert:
@@ -206,11 +266,19 @@
                   ansible.builtin.include_role:
                     name: linux-system-roles.nbde_client
                   vars:
-                    nbde_client_extra_dracut_settings: not_a_list
+                    nbde_client_extra_dracut_settings:
+                      invalid: true
               rescue:
                 - name: Mark invalid extra_dracut_settings type rejected
                   ansible.builtin.set_fact:
                     __invalid_input_extra_dracut_type_failed: true
+                  when:
+                    - >-
+                      "argument 'nbde_client_extra_dracut_settings' is of type" in
+                      __invalid_input_failure_messages
+                    - >-
+                      'unable to convert to list' in
+                      __invalid_input_failure_messages
 
             - name: Assert invalid extra_dracut_settings type was rejected
               ansible.builtin.assert:
@@ -220,7 +288,7 @@
                     | default(false)
                 fail_msg: >-
                   argument_specs should reject
-                  nbde_client_extra_dracut_settings with type string
+                  nbde_client_extra_dracut_settings with a mapping value
 
         # ====================================================
         # Section 3: assert_role_vars validation (all versions)
@@ -242,9 +310,10 @@
             - name: Mark invalid slot range rejected
               ansible.builtin.set_fact:
                 __invalid_input_slot_range_failed: true
-              when: >-
-                'must be a positive integer' in
-                (ansible_failed_result | default({}) | to_json)
+              when:
+                - >-
+                  'nbde_client_bindings[0].slot must be a positive integer, got 0 (int)' in
+                  __invalid_input_failure_messages
 
         - name: Assert invalid slot range was rejected
           ansible.builtin.assert:
@@ -269,9 +338,10 @@
             - name: Mark boolean slot rejected
               ansible.builtin.set_fact:
                 __invalid_input_slot_bool_failed: true
-              when: >-
-                'must be a positive integer' in
-                (ansible_failed_result | default({}) | to_json)
+              when:
+                - >-
+                  'nbde_client_bindings[0].slot must be a positive integer, got True (bool)' in
+                  __invalid_input_failure_messages
 
         - name: Assert boolean slot was rejected
           ansible.builtin.assert:
@@ -296,9 +366,10 @@
             - name: Mark invalid threshold range rejected
               ansible.builtin.set_fact:
                 __invalid_input_threshold_range_failed: true
-              when: >-
-                'must be a positive integer' in
-                (ansible_failed_result | default({}) | to_json)
+              when:
+                - >-
+                  'nbde_client_bindings[0].threshold must be a positive integer, got 0 (int)' in
+                  __invalid_input_failure_messages
 
         - name: Assert invalid threshold range was rejected
           ansible.builtin.assert:
@@ -325,9 +396,10 @@
             - name: Mark boolean threshold rejected
               ansible.builtin.set_fact:
                 __invalid_input_threshold_bool_failed: true
-              when: >-
-                'must be a positive integer' in
-                (ansible_failed_result | default({}) | to_json)
+              when:
+                - >-
+                  'nbde_client_bindings[0].threshold must be a positive integer, got True (bool)' in
+                  __invalid_input_failure_messages
 
         - name: Assert boolean threshold was rejected
           ansible.builtin.assert:
@@ -352,9 +424,10 @@
             - name: Mark missing servers rejected
               ansible.builtin.set_fact:
                 __invalid_input_missing_servers_failed: true
-              when: >-
-                'servers is required' in
-                (ansible_failed_result | default({}) | to_json)
+              when:
+                - >-
+                  'nbde_client_bindings[0].servers is required when state is present' in
+                  __invalid_input_failure_messages
 
         - name: Assert missing servers was rejected
           ansible.builtin.assert:
@@ -380,9 +453,10 @@
             - name: Mark extra_dracut with early_boot false rejected
               ansible.builtin.set_fact:
                 __invalid_input_extra_dracut_early_boot_failed: true
-              when: >-
-                'nbde_client_extra_dracut_settings requires' in
-                (ansible_failed_result | default({}) | to_json)
+              when:
+                - >-
+                  'nbde_client_extra_dracut_settings requires nbde_client_early_boot to be true' in
+                  __invalid_input_failure_messages
 
         - name: Assert extra_dracut with early_boot false was rejected
           ansible.builtin.assert:
